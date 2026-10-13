@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 模型 / 向量库（本地生成）
+backend/chroma_db/
+backend/models/
+*.onnx
+
+# Node
+node_modules/
+frontend/dist/
+
+# 环境与日志
+.env
+*.log
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
