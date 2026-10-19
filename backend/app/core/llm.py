@@ -1,43 +1,51 @@
 # -*- coding: utf-8 -*-
-"""Ollama + Qwen2.5 本地大模型封装。"""
+"""智谱 GLM 大模型封装（OpenAI 兼容接口）。"""
 from functools import lru_cache
 
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 
 from app.config import (
+    LLM_MAX_RETRIES,
     LLM_MODEL,
-    LLM_NUM_CTX,
     LLM_TEMPERATURE,
-    OLLAMA_BASE_URL,
+    LLM_THINKING,
+    LLM_TIMEOUT,
+    ZHIPU_API_KEY,
+    ZHIPU_BASE_URL,
 )
 
 
 @lru_cache(maxsize=2)  # 流式 / 非流式各缓存一个实例
-def get_llm(streaming: bool = False) -> ChatOllama:
-    """返回 ChatOllama 实例。
+def get_llm(streaming: bool = False) -> ChatOpenAI:
+    """返回接入智谱 GLM 的 ChatOpenAI 实例。
 
     Args:
         streaming: 是否开启流式输出（对话接口使用）。
+
+    稳定性设计：
+        - timeout: 推理模型（glm-4.7 系列）生成耗时较长，超时需放宽；
+        - max_retries: 智谱高峰期限流（429 "模型访问量过大"）时按指数退避重试，
+          大幅提高瞬时拥塞下的成功率。
     """
-    return ChatOllama(
-        base_url=OLLAMA_BASE_URL,
+    if not ZHIPU_API_KEY:
+        raise RuntimeError("未配置 ZHIPU_API_KEY，请在 backend/.env 中填入智谱 API Key")
+
+    kwargs = {}
+    if LLM_THINKING in ("true", "false"):  # 显式配置时才下发思考开关，否则尊重模型默认行为
+        kwargs["extra_body"] = {"thinking": {"type": "enabled" if LLM_THINKING == "true" else "disabled"}}
+
+    return ChatOpenAI(
         model=LLM_MODEL,
+        api_key=ZHIPU_API_KEY,
+        base_url=ZHIPU_BASE_URL,
         temperature=LLM_TEMPERATURE,
-        num_ctx=LLM_NUM_CTX,
         streaming=streaming,
+        timeout=LLM_TIMEOUT,
+        max_retries=LLM_MAX_RETRIES,
+        **kwargs,
     )
 
 
-def check_ollama() -> bool:
-    """探测 Ollama 服务与模型是否可用。"""
-    import httpx
-
-    try:
-        resp = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
-        if resp.status_code != 200:
-            return False
-        models = [m.get("name", "") for m in resp.json().get("models", [])]
-        base = LLM_MODEL.split(":")[0]
-        return any(m == LLM_MODEL or m.startswith(base) for m in models)
-    except Exception:
-        return False
+def check_llm() -> bool:
+    """探测智谱 API 是否已配置（密钥存在即视为就绪）。"""
+    return bool(ZHIPU_API_KEY)

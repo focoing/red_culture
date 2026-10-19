@@ -1,43 +1,22 @@
 # 武汉红色文化导览小助手 - 一键容器化部署
 # 用法：
-#   docker compose up -d --build
-#   首次启动需拉取 Qwen2.5 模型：
-#   docker compose exec ollama ollama pull qwen2.5:7b
+#   1. 在宿主机环境变量或 backend/.env 中配置 ZHIPU_API_KEY（https://open.bigmodel.cn 申请）
+#   2. docker compose up -d --build
 services:
-  # ---------- Ollama 本地大模型服务 ----------
-  ollama:
-    image: ollama/ollama:latest
-    container_name: red-culture-ollama
-    restart: unless-stopped
-    volumes:
-      - ollama_models:/root/.ollama
-    ports:
-      - "11434:11434"
-    # GPU 用户取消注释（需 nvidia-container-toolkit）
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-
   # ---------- FastAPI 后端 ----------
   backend:
     build: ./backend
     container_name: red-culture-backend
     restart: unless-stopped
     environment:
-      OLLAMA_BASE_URL: http://ollama:11434
-      LLM_MODEL: qwen2.5:7b
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      LLM_MODEL: glm-4.7-flash
       EMBEDDING_MODEL: BAAI/bge-small-zh-v1.5
       APP_PORT: 8000
     volumes:
       - chroma_data:/app/chroma_db
     ports:
       - "8000:8000"
-    depends_on:
-      - ollama
 
   # ---------- Vue 前端（Nginx） ----------
   frontend:
@@ -50,5 +29,4 @@ services:
       - backend
 
 volumes:
-  ollama_models:
   chroma_data:

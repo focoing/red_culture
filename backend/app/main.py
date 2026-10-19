@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.config import APP_HOST, APP_PORT, CHROMA_DIR, CORS_ORIGINS, VENUES_DIR
+from app.core.ratelimit import RateLimitMiddleware
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("red-culture")
@@ -31,10 +32,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="武汉红色文化导览小助手",
-    description="面向中小学生红色研学的垂直 RAG 智能导览系统：BGE 检索 + Chroma + Ollama/Qwen2.5",
+    description="面向中小学生红色研学的垂直 RAG 智能导览系统：BGE 检索 + Chroma + 智谱 GLM",
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# 注册顺序：限流先注册（内层）、CORS 后注册（外层），保证 429 响应同样携带 CORS 头
+app.add_middleware(RateLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -53,6 +53,10 @@ async function send(text) {
         if (type === 'meta') sessionId.value = data.session_id
         else if (type === 'sources') reply.sources = data
         else if (type === 'delta') { reply.content += data; scrollBottom() }
+        else if (type === 'tool') {
+          const labels = { query_venue_info: '场馆参观信息', list_venues: '场馆目录' }
+          reply.toolHint = (data || []).map((t) => labels[t.name] || t.name).join('、')
+        }
         else if (type === 'done') { reply.content = data; reply.streaming = false }
         else if (type === 'error') {
           reply.content += `\n\n> ⚠️ 出错了：${data.message || '服务异常'}`
@@ -61,7 +65,7 @@ async function send(text) {
       },
     )
   } catch (e) {
-    reply.content += `\n\n> ⚠️ 无法连接服务：${e.message}（请确认后端与 Ollama 已启动）`
+    reply.content += `\n\n> ⚠️ 无法连接服务：${e.message}（请确认后端已启动且已配置智谱 API Key）`
   } finally {
     reply.streaming = false
     sending.value = false
@@ -87,6 +91,7 @@ function resetChat() {
         <div class="avatar">{{ m.role === 'user' ? '我' : '旗' }}</div>
         <div class="bubble">
           <MarkdownView v-if="m.content" :content="m.content" />
+          <div v-if="m.streaming && m.toolHint && !m.content" class="tool-hint">🔍 正在查询{{ m.toolHint }}…</div>
           <div v-if="m.streaming" class="loading-dots"><i /><i /><i /></div>
 
           <div v-if="m.role === 'assistant' && m.sources && m.sources.length && !m.streaming" class="sources">
@@ -153,6 +158,7 @@ function resetChat() {
 .source-item { font-size: 12px; color: var(--ink-light); margin: 3px 0; display: flex; gap: 6px; align-items: baseline; }
 .source-snippet { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 380px; }
 
+.tool-hint { font-size: 12.5px; color: var(--ink-light); margin-top: 4px; }
 .suggestion-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 0 6px; }
 .suggestion {
   border: 1px dashed var(--red-600);

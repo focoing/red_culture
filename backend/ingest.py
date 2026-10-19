@@ -21,7 +21,6 @@ from app.config import (  # noqa: E402
     CHROMA_DIR,
     VENUES_DIR,
 )
-from app.core.embeddings import get_embeddings  # noqa: E402
 
 FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.S)
 
@@ -89,8 +88,6 @@ def chunk_sections(sections: list[dict], venue: str, meta: dict) -> list:
 
 
 def ingest(reset: bool = False) -> dict:
-    from langchain_chroma import Chroma
-
     if reset and CHROMA_DIR.exists():
         import shutil
         shutil.rmtree(CHROMA_DIR)
@@ -109,14 +106,15 @@ def ingest(reset: bool = False) -> dict:
         print(f"[parse] {path.name:<28} -> {len(docs):>3} 块  ({meta.get('name', '')})")
 
     print(f"[embed] 正在加载 {CHROMA_COLLECTION} 用的 BGE 模型并生成向量 …")
-    store = Chroma(
-        collection_name=CHROMA_COLLECTION,
-        persist_directory=str(CHROMA_DIR),
-        embedding_function=get_embeddings(),
-    )
-    ids = [f"chunk-{i}" for i in range(len(all_docs))]
-    store.add_documents(all_docs, ids=ids)  # Chroma 自动持久化
+    from app.core.vectorstore import add_documents
+
+    add_documents(all_docs)  # BGE 向量化后 upsert 入 Chroma，自动持久化
     print(f"[done] 共入库 {len(all_docs)} 个文本块，集合：{CHROMA_COLLECTION}")
+
+    # 知识库已重建，清空语义缓存，避免回放基于旧史料的答案
+    from app.core import cache as answer_cache
+    cleared = answer_cache.clear()
+    print(f"[cache] 已清空语义缓存 {cleared} 条")
     return {"venues": len(files), "chunks": len(all_docs)}
 
 

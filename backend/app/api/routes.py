@@ -2,7 +2,7 @@
 """API 路由层。
 
 端点：
-    GET  /api/health              健康检查（含 Ollama/知识库状态）
+    GET  /api/health              健康检查（含 LLM/知识库状态）
     GET  /api/venues              场馆目录
     GET  /api/grades              学段定义
     POST /api/chat/stream         分级 RAG 问答（SSE 流式）
@@ -18,12 +18,22 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.config import DEFAULT_GRADE, GRADE_LEVELS, LLM_MODEL
-from app.core.llm import check_ollama
+from app.core import cache as answer_cache
+from app.core.llm import check_llm
 from app.core.prompts import grade_label
 from app.core.vectorstore import collection_stats
 from app.services import chat_service, study_service, venue_service
+from openai import RateLimitError
 
 router = APIRouter(prefix="/api")
+
+
+async def _llm_call(fn, *args, **kwargs):
+    """执行 LLM 生成调用；智谱限流（429）时转为友好的 503 提示。"""
+    try:
+        return await fn(*args, **kwargs)
+    except RateLimitError:
+        raise HTTPException(status_code=503, detail="智谱大模型当前繁忙（429 限流），请稍后重试")
 
 
 # ---------------- Schemas ----------------
@@ -62,8 +72,9 @@ def _validate_grade(grade: str) -> str:
 def health():
     return {
         "status": "ok",
-        "llm": {"model": LLM_MODEL, "ollama_ready": check_ollama()},
+        "llm": {"model": LLM_MODEL, "llm_ready": check_llm()},
         "kb": collection_stats(),
+        "cache": answer_cache.stats(),
     }
 
 
@@ -105,7 +116,8 @@ async def chat(req: ChatRequest):
     sid = req.session_id or chat_service.new_session()
     from app.core.rag import agenerate
 
-    result = await agenerate(
+    result = await _llm_call(
+        agenerate,
         req.question.strip(), grade=req.grade,
         history=chat_service.get_history(sid),
         venue_filter=req.venue,
@@ -118,7 +130,7 @@ async def chat(req: ChatRequest):
 @router.post("/route")
 async def route(req: RouteRequest):
     _validate_grade(req.grade)
-    result = await study_service.generate_route(req.grade, req.theme, req.days)
+    result = await _llm_call(study_service.generate_route, req.grade, req.theme, req.days)
     return {"grade_label": grade_label(req.grade), **result}
 
 
@@ -127,7 +139,7 @@ async def tasks(req: TaskRequest):
     _validate_grade(req.grade)
     if not venue_service.get_venue(req.venue):
         raise HTTPException(404, f"未找到场馆：{req.venue}")
-    result = await study_service.generate_tasks(req.grade, req.venue)
+    result = await _llm_call(study_service.generate_tasks, req.grade, req.venue)
     return {"grade_label": grade_label(req.grade), **result}
 
 
@@ -136,5 +148,5 @@ async def explanation(req: ExplainRequest):
     _validate_grade(req.grade)
     if not venue_service.get_venue(req.venue):
         raise HTTPException(404, f"未找到场馆：{req.venue}")
-    result = await study_service.generate_explanation(req.grade, req.venue, req.topic)
+    result = await _llm_call(study_service.generate_explanation, req.grade, req.venue, req.topic)
     return {"grade_label": grade_label(req.grade), **result}

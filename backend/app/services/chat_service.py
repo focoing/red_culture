@@ -1,31 +1,21 @@
 # -*- coding: utf-8 -*-
-"""对话服务：会话管理（内存版）+ RAG 分级问答。"""
+"""对话服务：会话管理（SQLite 持久化）+ RAG 分级问答。"""
 import time
-import uuid
-from collections import defaultdict, deque
 
-from app.config import MAX_HISTORY_ROUNDS
+from app.core import storage
 from app.core.rag import agenerate_stream
-
-# 简单内存会话池：session_id -> deque[(role, content)]
-# 生产环境可替换为 Redis
-_SESSIONS: dict[str, deque] = defaultdict(lambda: deque(maxlen=MAX_HISTORY_ROUNDS * 2))
 
 
 def new_session() -> str:
-    sid = uuid.uuid4().hex[:12]
-    _SESSIONS[sid] = deque(maxlen=MAX_HISTORY_ROUNDS * 2)
-    return sid
+    return storage.new_session()
 
 
 def get_history(session_id: str) -> list[dict]:
-    return [{"role": r, "content": c} for r, c in _SESSIONS[session_id]]
+    return storage.get_history(session_id)
 
 
 def append_history(session_id: str, question: str, answer: str) -> None:
-    hist = _SESSIONS[session_id]
-    hist.append(("user", question))
-    hist.append(("assistant", answer))
+    storage.append_history(session_id, question, answer)
 
 
 async def chat_stream(session_id: str, question: str, grade: str):

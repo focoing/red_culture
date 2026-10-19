@@ -2,7 +2,7 @@
 
 面向**中小学生红色研学场景**的垂直 RAG 智能导览系统。
 
-基于 **Python + LangChain** 搭建检索增强生成（RAG）架构：**BAAI-BGE** 作为本地 Embedding 模型，**Chroma** 向量数据库存储武汉红色场馆史料，**Ollama 部署 Qwen2.5** 开源大模型实现完全本地推理；**FastAPI** 提供后端接口，**Vue 3** 实现前端交互，**Docker** 完成容器化部署。
+基于 **Python + LangChain** 搭建检索增强生成（RAG）架构：**BAAI-BGE** 作为本地 Embedding 模型，**Chroma** 向量数据库存储武汉红色场馆史料，**智谱 GLM（glm-4.7-flash）** 云端大模型负责生成；**FastAPI** 提供后端接口，**Vue 3** 实现前端交互，**Docker** 完成容器化部署。
 
 ## 核心特性
 
@@ -27,12 +27,17 @@ red_culture/
 │   │   ├── api/routes.py        # 接口层
 │   │   ├── core/
 │   │   │   ├── embeddings.py    # BAAI-BGE 本地 Embedding
-│   │   │   ├── llm.py           # Ollama + Qwen2.5
+│   │   │   ├── llm.py           # 智谱 GLM（超时/重试/思考模式可配）
 │   │   │   ├── vectorstore.py   # Chroma 检索
 │   │   │   ├── prompts.py       # 四级学段 Prompt 体系
-│   │   │   └── rag.py           # RAG 管线（流式/一次性）
+│   │   │   ├── rag.py           # RAG 管线（流式/一次性 + 语义缓存接入）
+│   │   │   ├── storage.py       # 会话持久化（SQLite）
+│   │   │   ├── cache.py         # 语义缓存（SQLite）
+│   │   │   └── ratelimit.py     # 按 IP 滑动窗口限流中间件
 │   │   └── services/            # 会话/场馆/研学服务
 │   ├── data/venues/             # 武汉红色场馆史料（15 篇，带元数据）
+│   ├── data/eval_dataset.json   # 分学段评测集（48 题，四学段 × 知识库内外）
+│   ├── evaluate.py              # 评测脚本（检索命中率/关键词覆盖/拒答正确率）
 │   ├── ingest.py                # 知识库入库脚本
 │   ├── requirements.txt
 │   └── Dockerfile
@@ -170,9 +175,23 @@ POST /api/chat/stream
 | 初中 | 脉络因果、衔接课本 | ≤500 字 | 思考类：比较与分析 |
 | 高中 | 论从史出、多元视角 | ≤700 字 | 表达类：小论文、小组研讨 |
 
+## 智能工具调用（Function Calling）
+
+对话接口在 RAG 管线上叠加了 GLM 原生 Function Calling（LangChain `@tool` + `bind_tools`）：工具与文本生成共用同一次 LLM 调用，仅当模型判断需要时才发起，普通史实问题不增加任何延迟。
+
+| 工具 | 功能 | 典型触发问题 |
+|---|---|---|
+| `query_venue_info` | 查询单个场馆的地址/开放时间/预约方式/建议时长 | "辛亥革命博物馆要预约吗？几点开门？" |
+| `list_venues` | 按主题列出场馆目录 | "抗战主题有哪些场馆可以参观？" |
+
+- **意图路由**：参观信息类问题由模型自主调用工具获取结构化数据（读取史料 front matter，毫秒级本地查询）；历史故事类问题直接依据 RAG 参考资料作答
+- **安全约束**：工具白名单注册、参数 Pydantic 校验、单轮最多执行 2 个工具、不做多步自主规划
+- **流式事件**：工具执行时 SSE 先推送 `tool` 事件（旧版前端不识别时自动忽略，向后兼容）
+- **开关**：`backend/.env` 中 `TOOL_CALLING_ENABLED=false` 可整体关闭，回退纯 RAG 模式
+
 ## 常见问题
 
-- **Ollama 连接失败**：确认 `ollama serve` 已运行；Docker 内后端默认访问 `http://ollama:11434`，本地开发为 `http://localhost:11434`（见 `.env`）。
-- **首次问答很慢**：BGE 权重加载与 Qwen2.5 首次推理需要预热，属正常现象。
-- **想换更小的模型**：`.env` 中改 `LLM_MODEL=qwen2.5:3b`（4GB 内存可用）。
+- **LLM 请求失败**：确认 `backend/.env` 中 `ZHIPU_API_KEY` 已填写且有效；Docker 部署时需通过环境变量传入。
+- **首次问答很慢**：BGE 权重加载需要预热，属正常现象。
+- **想换其他模型**：`.env` 中改 `LLM_MODEL`（如 `glm-4.5-flash`）。
 - **回答太保守**：可适当调高 `SCORE_THRESHOLD` 相关度阈值或 `TOP_K`。
