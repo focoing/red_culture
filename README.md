@@ -14,7 +14,8 @@
 | 研学路线生成 | 按主题（辛亥首义 / 党史转折 / 工人运动 / 抗战烽火）与时长生成学段适配的参观路线 |
 | 研学任务单 | 为指定场馆生成"观察→记录→思考→表达"梯度递进的任务单 |
 | 场馆讲解词 | 一键为任一场馆生成当前学段讲解词 |
-| 完全本地化 | Embedding 与 LLM 均本地部署，无需外部 API Key，数据不出校 |
+| 智能工具调用 | 参观信息类问题由 GLM 按需调用本地白名单工具（场馆信息/场馆目录），普通问题零额外延迟 |
+| 工程底座 | SQLite 会话持久化、语义缓存（相似问秒回）、按 IP 限流、429 指数退避重试 |
 
 ## 项目结构
 
@@ -30,7 +31,8 @@ red_culture/
 │   │   │   ├── llm.py           # 智谱 GLM（超时/重试/思考模式可配）
 │   │   │   ├── vectorstore.py   # Chroma 检索
 │   │   │   ├── prompts.py       # 四级学段 Prompt 体系
-│   │   │   ├── rag.py           # RAG 管线（流式/一次性 + 语义缓存接入）
+│   │   │   ├── rag.py           # RAG 管线（流式/一次性 + 语义缓存 + 智能工具调用）
+│   │   │   ├── tools.py         # Function Calling 工具集（白名单）
 │   │   │   ├── storage.py       # 会话持久化（SQLite）
 │   │   │   ├── cache.py         # 语义缓存（SQLite）
 │   │   │   └── ratelimit.py     # 按 IP 滑动窗口限流中间件
@@ -48,36 +50,31 @@ red_culture/
 │   │   └── components/          # 问答 / 场馆 / 研学工具 / 学段选择
 │   ├── nginx/default.conf       # 静态托管 + API 反代（SSE 透传）
 │   └── Dockerfile
-└── docker-compose.yml           # ollama + backend + frontend
+└── docker-compose.yml           # backend + frontend
 ```
 
 ## 快速开始（Docker 一键部署，推荐）
 
 ```bash
-# 1. 构建并启动三个服务
+# 1. 申请智谱 API Key（https://open.bigmodel.cn），写入 backend/.env
+cd backend
+copy .env.example .env            # Linux: cp .env.example .env
+# 编辑 .env，填入 ZHIPU_API_KEY=...
+
+# 2. 构建并启动两个服务
+cd ..
 docker compose up -d --build
-
-# 2. 首次启动需拉取 Qwen2.5 模型（约 4.7GB）
-docker compose exec ollama ollama pull qwen2.5:7b
-
-# 3. 重启后端以完成首次知识库入库（entrypoint 自动执行 ingest）
-docker compose restart backend
 ```
 
+- 首次启动时 entrypoint 检测到知识库为空会自动执行 `ingest.py` 入库，无需手动操作
 - 前端：http://localhost:8080
 - 后端接口文档：http://localhost:8000/docs
 
-> GPU 加速：安装 nvidia-container-toolkit 后取消 docker-compose.yml 中 GPU 注释即可。
-
 ## 本地开发
 
-### 1. 准备 Ollama
+### 1. 配置智谱 API Key
 
-```bash
-# 安装 Ollama（https://ollama.com）
-ollama pull qwen2.5:7b
-ollama serve
-```
+在 https://open.bigmodel.cn 申请 API Key，复制 `backend/.env.example` 为 `backend/.env` 并填入 `ZHIPU_API_KEY`。
 
 ### 2. 后端
 
@@ -86,7 +83,6 @@ cd backend
 python -m venv .venv && .venv\Scripts\activate    # Windows
 pip install -r requirements.txt
 
-copy .env.example .env                            # 按需修改
 python ingest.py                                  # 构建向量知识库（首次必跑）
 uvicorn app.main:app --reload --port 8000
 ```
@@ -105,7 +101,7 @@ npm run dev     # http://localhost:5173（已代理 /api -> :8000）
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/api/health` | 健康检查（Ollama / 知识库状态） |
+| GET | `/api/health` | 健康检查（智谱 GLM 配置 / 知识库状态） |
 | GET | `/api/venues` | 场馆目录（支持 `?theme=` 过滤） |
 | GET | `/api/grades` | 学段定义 |
 | POST | `/api/chat/stream` | 分级 RAG 问答（SSE 流式） |
@@ -148,7 +144,7 @@ POST /api/chat/stream
 └────────┬────────────────────────┘
          ▼
 ┌─────────────────┐
-│ Ollama Qwen2.5  │── SSE 流式输出 + 来源引用
+│ 智谱 GLM 云端API │── SSE 流式输出 + 来源引用
 └─────────────────┘
 ```
 
