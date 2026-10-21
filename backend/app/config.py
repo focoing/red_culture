@@ -52,6 +52,7 @@ RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "20"))        # 每 IP 
 
 # ---------- 智能工具调用（P4：GLM Function Calling） ----------
 TOOL_CALLING_ENABLED = os.getenv("TOOL_CALLING_ENABLED", "true").lower() in ("1", "true", "yes")
+AGENT_MAX_STEPS = int(os.getenv("AGENT_MAX_STEPS", "3"))  # Agentic 工具决策循环轮数上限（普通问题首轮直接作答，不消耗轮数）
 
 # ---------- 学段定义 ----------
 GRADE_LEVELS = {

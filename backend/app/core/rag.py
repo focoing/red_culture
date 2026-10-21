@@ -9,7 +9,7 @@ from typing import AsyncGenerator, List
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 
-from app.config import CACHE_ENABLED, MAX_HISTORY_ROUNDS, TOOL_CALLING_ENABLED
+from app.config import AGENT_MAX_STEPS, CACHE_ENABLED, MAX_HISTORY_ROUNDS, TOOL_CALLING_ENABLED
 from app.core import cache as answer_cache
 from app.core.llm import get_llm
 from app.core.prompts import CHAT_TEMPLATE, build_system_prompt
@@ -19,13 +19,16 @@ from app.core.vectorstore import search
 _CITATION_RE = re.compile(r"\s*【?\[(\d+)\]】?\s*")
 
 # 开启工具调用时追加到 System Prompt 的意图路由提示：
-# 参观信息走工具（结构化数据更准确），史实问题走 RAG 参考资料
+# 参观信息走结构化工具，史料不足走补充检索，充足则直接依据参考资料作答
 _TOOL_HINT = (
-    "\n\n【工具使用】你可以调用本地查询工具获取准确的实时信息：\n"
+    "\n\n【工具使用】你可以调用本地工具获取信息，并可多步组合使用"
+    f"（每轮最多 2 个，总共最多 {AGENT_MAX_STEPS} 轮）：\n"
+    "- search_history(query, venue)：在史料知识库中检索史料段落——当参考资料不足以回答时，"
+    "用不同关键词再次检索，或限定某场馆检索\n"
     "- query_venue_info(venue_name)：查询某场馆的地址、开放时间、预约方式、建议游览时长等参观信息\n"
     "- list_venues(theme)：按主题列出可参观的场馆目录\n"
-    "学生询问开放时间、预约方式、地址等参观信息时，优先调用工具获取数据；"
-    "历史故事类问题直接依据参考资料作答，不需要调用工具。"
+    "使用原则：参观信息类问题优先调用工具获取结构化数据；参考资料不足时可多步检索补全；"
+    "资料已足够时直接依据参考资料作答，不要调用工具。"
 )
 
 
@@ -107,18 +110,25 @@ async def agenerate(
     llm = get_llm(streaming=False)
     tools_used: list[str] = []
     if TOOL_CALLING_ENABLED:
-        # 绑定工具的同一次调用：模型仅在参观信息类问题上发起 tool_calls，
-        # 普通史实问题不调用工具，仍是单次 LLM 调用（零额外延迟）
-        resp = await llm.bind_tools(get_tools()).ainvoke(messages)
-        calls = (resp.tool_calls or [])[:MAX_TOOLS_PER_CALL]
-        if calls:
-            tools_used = [c.get("name", "") for c in calls]
+        # 受控 Agentic 循环：模型按需调用工具（含史料补充检索），最多 AGENT_MAX_STEPS 轮；
+        # 普通史实问题首轮即直接作答（零额外延迟）
+        llm_tools = llm.bind_tools(get_tools())
+        steps = 0
+        while steps < AGENT_MAX_STEPS:
+            resp = await llm_tools.ainvoke(messages)
+            calls = (resp.tool_calls or [])[:MAX_TOOLS_PER_CALL]
+            if not calls:
+                break
+            tools_used.extend(c.get("name", "") for c in calls)
             # 本地执行工具（毫秒级，不调 LLM），结果以 ToolMessage 回填
             messages = list(messages) + [
                 AIMessage(content=resp.content or "", tool_calls=calls),
                 *run_tool_calls(resp),
             ]
-            # 第二次调用不再绑定工具（单轮工具调用上限），生成最终分级回答
+            steps += 1
+        else:
+            # 步数耗尽仍请求工具：强制基于已获取资料生成最终回答（不再绑定工具）
+            messages.append(("system", "工具调用已达上限，请直接依据已获取的资料回答学生问题。"))
             resp = await llm.ainvoke(messages)
     else:
         resp = await llm.ainvoke(messages)
@@ -154,29 +164,33 @@ async def agenerate_stream(
 
     messages = build_messages(question, grade, docs, history, extra_task, use_tools=TOOL_CALLING_ENABLED)
     llm = get_llm(streaming=True)
-    buffer = []
+    final_chunks: list[str] = []  # 仅最终回答轮的文本（中间工具轮文本不计入完整答案）
 
     async def _stream(runnable, msgs):
-        """流式产出文本增量并累积到 buffer。"""
+        """流式产出文本增量并累积到 final_chunks。"""
         async for chunk in runnable.astream(msgs):
             if chunk.content:
-                buffer.append(chunk.content)
+                final_chunks.append(chunk.content)
                 yield {"type": "delta", "data": chunk.content}
 
     if TOOL_CALLING_ENABLED:
-        # 阶段一（决策与生成合一）：绑定工具的流式调用。
-        # 普通问题模型直接流式产出正文（体验与未开启工具时完全一致）；
-        # 参观信息类问题模型会发起 tool_calls（此时正文一般为空），聚合后本地执行。
-        aggregated = None
-        async for chunk in llm.bind_tools(get_tools()).astream(messages):
-            if chunk.content:
-                buffer.append(chunk.content)
-                yield {"type": "delta", "data": chunk.content}
-            aggregated = chunk if aggregated is None else aggregated + chunk
-        calls = []
-        if aggregated is not None:
-            calls = (getattr(aggregated, "tool_calls", None) or [])[:MAX_TOOLS_PER_CALL]
-        if calls:
+        # 受控 Agentic 循环（流式版）：普通问题首轮直接流式产出（体验与纯 RAG 完全一致）；
+        # 模型请求工具时推送 tool 事件、本地执行后进入下一轮，最多 AGENT_MAX_STEPS 轮
+        steps = 0
+        while steps < AGENT_MAX_STEPS:
+            aggregated = None
+            step_chunks: list[str] = []
+            async for chunk in llm.bind_tools(get_tools()).astream(messages):
+                if chunk.content:
+                    step_chunks.append(chunk.content)
+                    yield {"type": "delta", "data": chunk.content}
+                aggregated = chunk if aggregated is None else aggregated + chunk
+            calls = []
+            if aggregated is not None:
+                calls = (getattr(aggregated, "tool_calls", None) or [])[:MAX_TOOLS_PER_CALL]
+            if not calls:
+                final_chunks = step_chunks  # 本轮即最终回答
+                break
             # 通知前端正在查询（前端不识别该事件时自动忽略，向后兼容）
             yield {"type": "tool", "data": [
                 {"name": c.get("name", ""), "args": c.get("args", {})} for c in calls
@@ -185,14 +199,17 @@ async def agenerate_stream(
                 AIMessage(content=aggregated.content or "", tool_calls=calls),
                 *run_tool_calls(aggregated),
             ]
-            # 阶段二：基于工具结果流式生成最终分级回答（不再绑定工具，单轮上限）
+            steps += 1
+        else:
+            # 步数耗尽：强制基于已获取资料流式生成最终回答（不再绑定工具）
+            messages.append(("system", "工具调用已达上限，请直接依据已获取的资料回答学生问题。"))
             async for ev in _stream(llm, messages):
                 yield ev
     else:
         async for ev in _stream(llm, messages):
             yield ev
 
-    full = clean_citation("".join(buffer))
+    full = clean_citation("".join(final_chunks))
     if CACHE_ENABLED and not history:
         answer_cache.store(question, grade, venue_filter, full, sources)
     yield {"type": "done", "data": full}

@@ -54,7 +54,7 @@ async function send(text) {
         else if (type === 'sources') reply.sources = data
         else if (type === 'delta') { reply.content += data; scrollBottom() }
         else if (type === 'tool') {
-          const labels = { query_venue_info: '场馆参观信息', list_venues: '场馆目录' }
+          const labels = { query_venue_info: '场馆参观信息', list_venues: '场馆目录', search_history: '史料库' }
           reply.toolHint = (data || []).map((t) => labels[t.name] || t.name).join('、')
         }
         else if (type === 'done') { reply.content = data; reply.streaming = false }
