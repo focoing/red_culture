@@ -10,13 +10,16 @@ services:
     restart: unless-stopped
     environment:
       ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
-      LLM_MODEL: glm-4.7-flash
+      ZHIPU_BASE_URL: ${ZHIPU_BASE_URL:-https://open.bigmodel.cn/api/paas/v4/}
+      LLM_MODEL: ${LLM_MODEL:-glm-4.7-flash}
       EMBEDDING_MODEL: BAAI/bge-small-zh-v1.5
+      AMAP_KEY: ${AMAP_KEY:-}
       APP_PORT: 8000
     volumes:
       - chroma_data:/app/chroma_db
-    ports:
-      - "8000:8000"
+    # 只在 Docker 内网暴露（前端 Nginx 经 backend:8000 访问），不对公网开放，防止 API Key 被刷
+    expose:
+      - "8000"
 
   # ---------- Vue 前端（Nginx） ----------
   frontend:

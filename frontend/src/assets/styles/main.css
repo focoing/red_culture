@@ -130,6 +130,31 @@ html, body {
 .md-body table { border-collapse: collapse; width: 100%; margin: 10px 0; }
 .md-body th, .md-body td { border: 1px solid var(--line); padding: 6px 10px; font-size: 13px; text-align: left; }
 .md-body th { background: var(--red-50); }
+/* 宽元素防溢出：代码块/表格超宽时容器内横向滚动，不撑破卡片边距 */
+.md-body pre { max-width: 100%; overflow-x: auto; padding: 10px 12px; background: var(--red-50); border-radius: 8px; }
+.md-body pre code { background: none; padding: 0; }
+.md-body img { max-width: 100%; }
+.md-body table { display: block; overflow-x: auto; }
+
+/* ---------- 引用角标（点击可在参考史料中展开原文） ---------- */
+.md-body sup.cite {
+  display: inline-block;
+  min-width: 16px;
+  margin: 0 1px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--red-100);
+  color: var(--red-700);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: super;
+}
+.md-body sup.cite:hover { background: var(--red-700); color: #fff; }
+.msg.user .bubble sup.cite { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
 /* ---------- 加载 ---------- */
 .loading-dots { display: inline-flex; gap: 5px; align-items: center; }

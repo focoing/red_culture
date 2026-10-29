@@ -153,11 +153,18 @@ def main() -> None:
     parser.add_argument("--grade", choices=GRADE_ORDER, default=None, help="只评测指定学段")
     parser.add_argument("--limit", type=int, default=None, help="限制评测题数（截断数据集）")
     parser.add_argument("--no-cache", action="store_true", help="full 模式下绕过语义缓存")
+    parser.add_argument("--engine", choices=["auto", "vector", "hybrid"], default="auto",
+                        help="检索引擎：auto=按配置；vector=纯向量基线；hybrid=BM25+RRF 混合（对比实验）")
     args = parser.parse_args()
 
-    # --no-cache 需在导入 app 模块前生效（load_dotenv 不覆盖已存在的环境变量）
+    # 环境开关需在导入 app 模块前生效（load_dotenv 不覆盖已存在的环境变量）
     if args.no_cache:
         os.environ["CACHE_ENABLED"] = "false"
+    if args.engine == "vector":
+        os.environ["HYBRID_ENABLED"] = "false"
+        os.environ["RERANKER_ENABLED"] = "false"
+    elif args.engine == "hybrid":
+        os.environ["HYBRID_ENABLED"] = "true"
 
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -169,7 +176,8 @@ def main() -> None:
         print("评测集为空：请检查 --grade / --limit 参数")
         return
 
-    print(f"载入评测集 {len(items)} 题（mode={args.mode}"
+    engine_note = f"，engine={args.engine}" if args.engine != "auto" else ""
+    print(f"载入评测集 {len(items)} 题（mode={args.mode}{engine_note}"
           f"{'，grade=' + args.grade if args.grade else ''}）\n")
 
     if args.mode == "retrieval":

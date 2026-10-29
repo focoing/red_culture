@@ -2,17 +2,18 @@
 import { ref, provide } from 'vue'
 import GradeSelector from './components/GradeSelector.vue'
 import ChatPanel from './components/ChatPanel.vue'
-import VenuePanel from './components/VenuePanel.vue'
+import TourPanel from './components/TourPanel.vue'
 import StudyTools from './components/StudyTools.vue'
 
 const grade = ref('primary_high') // 全局学段状态
 provide('grade', grade)
 
-const tab = ref('chat')
+// 导览为主：场馆导览（默认首页）-> 研学工具 -> 史料问答（随行辅助）
+const tab = ref('tour')
 const tabs = [
-  { key: 'chat', label: '智能问答' },
-  { key: 'venues', label: '场馆导览' },
+  { key: 'tour', label: '场馆导览' },
   { key: 'tools', label: '研学工具' },
+  { key: 'chat', label: '史料问答' },
 ]
 </script>
 
@@ -24,7 +25,7 @@ const tabs = [
     </svg>
     <div>
       <h1>武汉红色文化导览小助手</h1>
-      <div class="subtitle">AI 研学导览 · 史料查询 · 路线规划 · 任务生成（RAG 本地知识库）</div>
+      <div class="subtitle">场馆随行导览｜红色故事讲解｜研学任务生成｜史料查询</div>
     </div>
     <div class="header-right">
       <GradeSelector v-model="grade" />
@@ -42,8 +43,8 @@ const tabs = [
       >{{ t.label }}</button>
     </nav>
 
-    <ChatPanel v-show="tab === 'chat'" />
-    <VenuePanel v-show="tab === 'venues'" />
+    <TourPanel v-show="tab === 'tour'" />
     <StudyTools v-show="tab === 'tools'" />
+    <ChatPanel v-show="tab === 'chat'" />
   </main>
 </template>

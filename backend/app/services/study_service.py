@@ -7,17 +7,28 @@ from app.core.prompts import EXPLAIN_TASK, ROUTE_TASK, TASK_TASK
 from app.core.rag import agenerate
 
 
-def _route_query(theme: str, days: str) -> str:
-    return (
+def _route_query(theme: str, days: str, venues: list[str] | None = None) -> str:
+    query = (
         f"请为武汉红色研学规划路线。研学主题：{theme or '综合红色文化'}；"
         f"计划时长：{days}。请重点参考【武汉红色文化总览】中提到的经典线路与交通建议。"
     )
+    if venues:
+        query += (
+            f"用户已初步选定场馆：{'、'.join(venues)}。"
+            "请按地理动线与研学逻辑安排这些场馆的游览顺序，路线必须覆盖上述全部场馆；"
+            "如时长允许，可在关键节点补充与主题紧密相关的其它场馆。"
+        )
+    return query
 
 
-async def generate_route(grade: str, theme: str = "", days: str = "一日") -> dict:
-    """生成研学路线（基于总览与场馆史料检索）。"""
+async def generate_route(grade: str, theme: str = "", days: str = "一日",
+                         venues: list[str] | None = None) -> dict:
+    """生成研学路线（基于总览与场馆史料检索）。
+
+    venues 非空时围绕用户已选场馆规划（排序 + 串联讲解），为空则按主题自由推荐。
+    """
     return await agenerate(
-        _route_query(theme, days), grade=grade, extra_task=ROUTE_TASK,
+        _route_query(theme, days, venues), grade=grade, extra_task=ROUTE_TASK,
     )
 
 

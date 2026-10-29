@@ -36,6 +36,17 @@ SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.55"))  # 余弦距离上
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "450"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "60"))
 
+# ---------- 混合检索（BM25 + RRF 融合）与重排 ----------
+HYBRID_ENABLED = os.getenv("HYBRID_ENABLED", "true").lower() in ("1", "true", "yes")
+BM25_CANDIDATES = int(os.getenv("BM25_CANDIDATES", "10"))      # BM25 腿召回候选数
+RRF_K = int(os.getenv("RRF_K", "60"))                          # RRF 融合常数（标准值 60）
+RRF_WEIGHT_VECTOR = float(os.getenv("RRF_WEIGHT_VECTOR", "1.0"))   # 向量腿融合权重（主）
+RRF_WEIGHT_BM25 = float(os.getenv("RRF_WEIGHT_BM25", "0.5"))       # BM25 腿融合权重（辅）
+MAX_PER_VENUE = int(os.getenv("MAX_PER_VENUE", "2"))           # 单场馆最多召回块数（多样性约束，0 关闭）
+RERANKER_ENABLED = os.getenv("RERANKER_ENABLED", "false").lower() in ("1", "true", "yes")
+RERANKER_MODEL = os.getenv("RERANKER_MODEL", "BAAI/bge-reranker-base")  # CrossEncoder 重排模型
+RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "12"))  # 参与重排的融合候选数
+
 # ---------- 应用 ----------
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
@@ -53,6 +64,14 @@ RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "20"))        # 每 IP 
 # ---------- 智能工具调用（P4：GLM Function Calling） ----------
 TOOL_CALLING_ENABLED = os.getenv("TOOL_CALLING_ENABLED", "true").lower() in ("1", "true", "yes")
 AGENT_MAX_STEPS = int(os.getenv("AGENT_MAX_STEPS", "3"))  # Agentic 工具决策循环轮数上限（普通问题首轮直接作答，不消耗轮数）
+
+# ---------- 场馆导览 ----------
+# 点位内检索召回不足该数量时，自动放宽为整馆检索（三级放宽：点位 -> 场馆 -> 全局）
+SECTION_MIN_DOCS = int(os.getenv("SECTION_MIN_DOCS", "2"))
+
+# ---------- 高德地图 Web 服务（可选：真实公交/地铁换乘规划） ----------
+# 在 https://console.amap.com 申请 Web 服务 Key；未配置时换乘接口优雅降级（available=false）
+AMAP_KEY = os.getenv("AMAP_KEY", "")
 
 # ---------- 学段定义 ----------
 GRADE_LEVELS = {

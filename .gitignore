@@ -20,6 +20,9 @@ frontend/dist/
 # 运行时数据（会话/缓存 SQLite，不含史料与评测集）
 backend/data/*.db
 
+# 场馆史料草稿（撰写中，暂不入库）
+backend/data/venues_new/
+
 # IDE
 .vscode/
 .idea/
