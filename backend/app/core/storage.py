@@ -25,6 +25,9 @@ def _get_conn() -> sqlite3.Connection | None:
         return _conn
     try:
         conn = sqlite3.connect(str(SESSION_DB), check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=3000")
+        conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute(
             """CREATE TABLE IF NOT EXISTS messages (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,11 +38,18 @@ def _get_conn() -> sqlite3.Connection | None:
             )"""
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, id)")
-        # 顺带清理过期会话，避免库文件无限增长
+        # 会话归属表：会话与登录用户绑定，防止跨用户读取他人历史
         conn.execute(
-            "DELETE FROM messages WHERE created_at < ?",
-            (time.time() - _SESSION_TTL_DAYS * 86400,),
+            """CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY,
+                user_id    TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )"""
         )
+        deadline = time.time() - _SESSION_TTL_DAYS * 86400
+        # 顺带清理过期数据，避免库文件无限增长
+        conn.execute("DELETE FROM messages WHERE created_at < ?", (deadline,))
+        conn.execute("DELETE FROM sessions WHERE created_at < ?", (deadline,))
         conn.commit()
         _conn = conn
     except Exception:
@@ -47,9 +57,36 @@ def _get_conn() -> sqlite3.Connection | None:
     return _conn
 
 
-def new_session() -> str:
-    """创建新会话，返回会话ID（行记录在首次追加历史时才产生）。"""
-    return uuid.uuid4().hex[:12]
+def new_session(user_id: str | None = None) -> str:
+    """创建新会话并登记归属，返回会话ID（消息记录在首次追加历史时才产生）。"""
+    sid = uuid.uuid4().hex[:12]
+    conn = _get_conn()
+    if conn is not None and user_id is not None:
+        try:
+            with _lock:
+                conn.execute(
+                    "INSERT OR IGNORE INTO sessions (session_id, user_id, created_at) "
+                    "VALUES (?, ?, ?)",
+                    (sid, user_id, time.time()),
+                )
+                conn.commit()
+        except Exception:
+            pass
+    return sid
+
+
+def session_owner(session_id: str) -> str | None:
+    """查询会话归属用户；不存在或库降级时返回 None（视为无归属校验）。"""
+    conn = _get_conn()
+    if conn is None:
+        return None
+    try:
+        row = conn.execute(
+            "SELECT user_id FROM sessions WHERE session_id = ?", (session_id,)
+        ).fetchone()
+        return row[0] if row else None
+    except Exception:
+        return None
 
 
 def get_history(session_id: str) -> list[dict]:

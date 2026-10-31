@@ -52,16 +52,25 @@ def _retrieve(
     return search(question)
 
 
-def _cache_dim(venue_filter: str | None, section_filter: str | None) -> str | None:
-    """语义缓存隔离维度：点位讲解把 section 并入隔离维度。
+def _cache_dim(
+    venue_filter: str | None,
+    section_filter: str | None,
+    cache_section: str | None = None,
+) -> str | None:
+    """语义缓存隔离维度：把 section 并入隔离维度。
 
     讲解问题是模板化文本，不同站点仅差点位名几个字，语义相似度极高；
     若 section 不进隔离维度，第 2 站会误命中第 1 站的缓存答案（串台）。
     venue_filter 在缓存 SQL 中是精确匹配维度，可直接拼接。
+
+    cache_section 用于「检索不限点位、但缓存需按点位隔离」的场景：
+    随行问答只做整馆检索（保证跨点位问题可召回），却仍需按当前点位区分缓存，
+    否则同馆不同点位的首个提问会互相命中。
     """
-    if not section_filter:
+    section = section_filter or cache_section
+    if not section:
         return venue_filter
-    return f"{venue_filter}｜{section_filter}" if venue_filter else section_filter
+    return f"{venue_filter}｜{section}" if venue_filter else section
 
 
 def _format_context(docs: List[Document]) -> str:
@@ -123,6 +132,7 @@ async def agenerate(
     extra_task: str = "",
     venue_filter: str | None = None,
     section_filter: str | None = None,
+    cache_section: str | None = None,
     use_tools: bool | None = None,
 ) -> dict:
     """一次性生成完整回答。
@@ -131,6 +141,8 @@ async def agenerate(
     缓存模块任何异常均在内部兜底为"未命中"，不会阻断正常管线。
 
     Args:
+        cache_section: 仅用于缓存隔离的点位名。检索保持整馆（section_filter 为 None）时，
+            传它可避免同馆不同点位的首个提问互相命中缓存。
         use_tools: 是否启用工具调用循环。None 跟随全局 TOOL_CALLING_ENABLED；
             点位讲解等检索已由管线完成的场景传 False，单轮直出更快。
 
@@ -139,7 +151,9 @@ async def agenerate(
     """
     tools_on = TOOL_CALLING_ENABLED if use_tools is None else use_tools
     if CACHE_ENABLED and not history:
-        hit = answer_cache.lookup(question, grade, _cache_dim(venue_filter, section_filter))
+        hit = answer_cache.lookup(
+            question, grade, _cache_dim(venue_filter, section_filter, cache_section),
+        )
         if hit is not None:
             return {"answer": hit["answer"], "sources": hit["sources"], "cached": True}
 
@@ -175,8 +189,10 @@ async def agenerate(
     if tools_used:
         result["tools_used"] = tools_used
     if CACHE_ENABLED and not history:
-        answer_cache.store(question, grade, _cache_dim(venue_filter, section_filter),
-                           result["answer"], sources)
+        answer_cache.store(
+            question, grade, _cache_dim(venue_filter, section_filter, cache_section),
+            result["answer"], sources,
+        )
     return result
 
 
@@ -187,17 +203,21 @@ async def agenerate_stream(
     extra_task: str = "",
     venue_filter: str | None = None,
     section_filter: str | None = None,
+    cache_section: str | None = None,
     use_tools: bool | None = None,
 ) -> AsyncGenerator[dict, None]:
     """流式生成：先 yield 检索来源，再逐块 yield 文本增量。
 
+    cache_section: 仅用于缓存隔离的点位名（检索仍按 venue_filter 整馆进行）。
     use_tools: 是否启用工具调用循环；None 跟随全局开关。
     点位讲解传 False（检索已由三级放宽管线完成），单轮流式直出更快。
     """
     tools_on = TOOL_CALLING_ENABLED if use_tools is None else use_tools
     # 语义缓存命中：以事件流形式一次性回放，免调 LLM
     if CACHE_ENABLED and not history:
-        hit = answer_cache.lookup(question, grade, _cache_dim(venue_filter, section_filter))
+        hit = answer_cache.lookup(
+            question, grade, _cache_dim(venue_filter, section_filter, cache_section),
+        )
         if hit is not None:
             yield {"type": "sources", "data": hit["sources"]}
             yield {"type": "delta", "data": hit["answer"]}
@@ -257,5 +277,8 @@ async def agenerate_stream(
 
     full = "".join(final_chunks)
     if CACHE_ENABLED and not history:
-        answer_cache.store(question, grade, _cache_dim(venue_filter, section_filter), full, sources)
+        answer_cache.store(
+            question, grade, _cache_dim(venue_filter, section_filter, cache_section),
+            full, sources,
+        )
     yield {"type": "done", "data": full}

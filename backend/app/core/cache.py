@@ -26,6 +26,9 @@ def _get_conn() -> sqlite3.Connection | None:
         return _conn
     try:
         conn = sqlite3.connect(str(CACHE_DB), check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=3000")
+        conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute(
             """CREATE TABLE IF NOT EXISTS answer_cache (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,

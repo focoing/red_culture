@@ -7,8 +7,8 @@ from app.core.prompts import TOUR_SCENE_TASK
 from app.core.rag import agenerate_stream
 
 
-def new_session() -> str:
-    return storage.new_session()
+def new_session(user_id: str | None = None) -> str:
+    return storage.new_session(user_id)
 
 
 def get_history(session_id: str) -> list[dict]:
@@ -40,7 +40,7 @@ async def chat_stream(
 
     async for event in agenerate_stream(
         question, grade=grade, history=history,
-        venue_filter=venue, extra_task=extra_task,
+        venue_filter=venue, cache_section=section, extra_task=extra_task,
     ):
         if event["type"] == "delta":
             full_answer_parts.append(event["data"])

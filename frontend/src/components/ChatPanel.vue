@@ -1,7 +1,7 @@
 <script setup>
 // 史料问答面板：游览途中遇到疑问时，查询红色史料与历史细节（流式 RAG 对话 + 检索来源展示）
-import { nextTick, ref, inject } from 'vue'
-import { chatStream } from '../api'
+import { nextTick, ref, inject, onUnmounted } from 'vue'
+import { chatStream, streamErrMsg } from '../api'
 import MarkdownView from './MarkdownView.vue'
 
 const grade = inject('grade')
@@ -11,6 +11,10 @@ const input = ref('')
 const sending = ref(false)
 const sessionId = ref(null)
 const listEl = ref(null)
+let abortCtrl = null // 进行中的流式请求，组件卸载时中断
+
+// 组件卸载时中断进行中的 SSE 流
+onUnmounted(() => abortCtrl?.abort())
 
 const WELCOME = {
   role: 'assistant',
@@ -48,6 +52,7 @@ async function send(text) {
   sending.value = true
   scrollBottom()
 
+  abortCtrl = new AbortController()
   try {
     await chatStream(
       { question, grade: grade.value, session_id: sessionId.value },
@@ -65,9 +70,12 @@ async function send(text) {
           reply.streaming = false
         }
       },
+      abortCtrl.signal,
     )
   } catch (e) {
-    reply.content += `\n\n> ⚠️ 无法连接服务：${e.message}（请确认后端已启动且已配置智谱 API Key）`
+    // 429/401 直接展示后端 detail 文案；主动中断（卸载）不提示
+    const msg = streamErrMsg(e, '无法连接服务（请确认后端已启动且已配置智谱 API Key）')
+    if (msg) reply.content += `\n\n> ⚠️ ${msg}`
   } finally {
     reply.streaming = false
     sending.value = false

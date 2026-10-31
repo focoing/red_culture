@@ -15,21 +15,36 @@
     POST /api/tasks               研学任务单生成
     POST /api/explanation         场馆讲解词生成
 """
+import asyncio
 import json
+import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.config import DEFAULT_GRADE, GRADE_LEVELS, LLM_MODEL
 from app.core import cache as answer_cache
+from app.core import storage
+from app.core.auth import require_user
 from app.core.llm import check_llm
 from app.core.prompts import TOUR_SCENE_TASK, grade_label
+from app.core.safety import check_question, sanitize_question
 from app.core.vectorstore import collection_stats
 from app.services import amap_service, chat_service, study_service, tour_service, venue_service
 from openai import RateLimitError
 
+logger = logging.getLogger("red-culture.api")
+
 router = APIRouter(prefix="/api")
+
+_SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "X-Accel-Buffering": "no",  # nginx 禁用响应缓冲，保证流式实时性
+    "Connection": "keep-alive",
+}
+
+_LLM_BUSY_MSG = "智谱大模型当前访问量过大（免费模型高峰期限流），请稍等片刻再重试"
 
 
 async def _llm_call(fn, *args, **kwargs):
@@ -38,6 +53,61 @@ async def _llm_call(fn, *args, **kwargs):
         return await fn(*args, **kwargs)
     except RateLimitError:
         raise HTTPException(status_code=503, detail="智谱大模型当前繁忙（429 限流），请稍后重试")
+
+
+async def _sse_with_heartbeat(source, interval: float = 15.0):
+    """将业务事件流转为 SSE 帧；长时间无事件时发送注释心跳，防止代理断连。
+
+    业务事件生成在独立任务中泵入队列，主循环带超时读取——超时不取消
+    源生成器，避免打断进行中的 LLM 流式调用。
+    """
+    queue: asyncio.Queue = asyncio.Queue()
+
+    async def _pump():
+        try:
+            async for event in source:
+                await queue.put(event)
+        except RateLimitError:
+            await queue.put({"type": "error", "data": {"message": _LLM_BUSY_MSG}})
+        except Exception as e:  # noqa: BLE001
+            logger.exception("SSE 流处理异常")
+            await queue.put({"type": "error", "data": {"message": str(e)}})
+        finally:
+            await queue.put(None)
+
+    task = asyncio.create_task(_pump())
+    try:
+        while True:
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=interval)
+            except asyncio.TimeoutError:
+                yield ": ping\n\n"
+                continue
+            if event is None:
+                break
+            payload = json.dumps(event.get("data", ""), ensure_ascii=False)
+            yield f"event: {event['type']}\ndata: {payload}\n\n"
+    finally:
+        task.cancel()
+
+
+def _resolve_session(session_id: str | None, user: dict) -> str:
+    """复用或创建会话；已有会话必须属于当前用户（防止跨用户读取他人历史）。"""
+    if session_id:
+        owner = storage.session_owner(session_id)
+        if owner and owner != str(user["id"]):
+            raise HTTPException(403, "无权访问该会话")
+        return session_id
+    return chat_service.new_session(user["id"])
+
+
+def _check_question(text: str) -> str:
+    """输入安全边界：清洗 + 规则审查，违规返回 400。"""
+    cleaned = sanitize_question(text)
+    ok, reason = check_question(cleaned)
+    if not ok:
+        raise HTTPException(400, reason)
+    return cleaned
 
 
 # ---------------- Schemas ----------------
@@ -118,35 +188,26 @@ def grades():
 
 # ---------------- 对话 ----------------
 @router.post("/chat/stream")
-async def chat_stream(req: ChatRequest):
+async def chat_stream(req: ChatRequest, user: dict = Depends(require_user)):
     _validate_grade(req.grade)
-    sid = req.session_id or chat_service.new_session()
-    question = req.question.strip()
+    sid = _resolve_session(req.session_id, user)
+    question = _check_question(req.question)
 
     async def sse():
         yield f"event: meta\ndata: {json.dumps({'session_id': sid, 'grade_label': grade_label(req.grade)}, ensure_ascii=False)}\n\n"
-        try:
-            async for event in chat_service.chat_stream(
-                sid, question, req.grade, venue=req.venue, section=req.section,
-            ):
-                # data 字段只发业务数据（与 meta/error 事件格式统一），前端回调直接使用
-                payload = json.dumps(event.get("data", ""), ensure_ascii=False)
-                yield f"event: {event['type']}\ndata: {payload}\n\n"
-        except RateLimitError:
-            yield "event: error\ndata: " + json.dumps(
-                {"message": "智谱大模型当前访问量过大（免费模型高峰期限流），请稍等片刻再重试"},
-                ensure_ascii=False,
-            ) + "\n\n"
-        except Exception as e:  # noqa: BLE001
-            yield f"event: error\ndata: {json.dumps({'message': str(e)}, ensure_ascii=False)}\n\n"
+        async for chunk in _sse_with_heartbeat(
+            chat_service.chat_stream(sid, question, req.grade, venue=req.venue, section=req.section),
+        ):
+            yield chunk
 
-    return StreamingResponse(sse(), media_type="text/event-stream")
+    return StreamingResponse(sse(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
 @router.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, user: dict = Depends(require_user)):
     _validate_grade(req.grade)
-    sid = req.session_id or chat_service.new_session()
+    sid = _resolve_session(req.session_id, user)
+    question = _check_question(req.question)
     from app.core.rag import agenerate
 
     extra_task = ""
@@ -154,12 +215,13 @@ async def chat(req: ChatRequest):
         extra_task = TOUR_SCENE_TASK.format(venue=req.venue, section=req.section)
     result = await _llm_call(
         agenerate,
-        req.question.strip(), grade=req.grade,
+        question, grade=req.grade,
         history=chat_service.get_history(sid),
         venue_filter=req.venue,
+        cache_section=req.section,
         extra_task=extra_task,
     )
-    chat_service.append_history(sid, req.question.strip(), result["answer"])
+    chat_service.append_history(sid, question, result["answer"])
     return {"session_id": sid, **result}
 
 
@@ -174,7 +236,7 @@ def tour_route(venue: str):
 
 
 @router.post("/tour/explain")
-async def tour_explain(req: TourExplainRequest):
+async def tour_explain(req: TourExplainRequest, user: dict = Depends(require_user)):
     """点位导览讲解词（SSE 流式，命中语义缓存时零延迟回放）。"""
     _validate_grade(req.grade)
     route = venue_service.get_tour_route(req.venue)
@@ -185,24 +247,17 @@ async def tour_explain(req: TourExplainRequest):
 
     async def sse():
         yield f"event: meta\ndata: {json.dumps({'venue': req.venue, 'section': req.section, 'grade_label': grade_label(req.grade)}, ensure_ascii=False)}\n\n"
-        try:
-            async for event in tour_service.explain_stream(req.venue, req.section, req.grade):
-                payload = json.dumps(event.get("data", ""), ensure_ascii=False)
-                yield f"event: {event['type']}\ndata: {payload}\n\n"
-        except RateLimitError:
-            yield "event: error\ndata: " + json.dumps(
-                {"message": "大模型当前访问量过大（限流），请稍等片刻再重试"},
-                ensure_ascii=False,
-            ) + "\n\n"
-        except Exception as e:  # noqa: BLE001
-            yield f"event: error\ndata: {json.dumps({'message': str(e)}, ensure_ascii=False)}\n\n"
+        async for chunk in _sse_with_heartbeat(
+            tour_service.explain_stream(req.venue, req.section, req.grade),
+        ):
+            yield chunk
 
-    return StreamingResponse(sse(), media_type="text/event-stream")
+    return StreamingResponse(sse(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
 # ---------------- 研学服务 ----------------
 @router.post("/route")
-async def route(req: RouteRequest):
+async def route(req: RouteRequest, user: dict = Depends(require_user)):
     _validate_grade(req.grade)
     result = await _llm_call(study_service.generate_route, req.grade, req.theme, req.days,
                              req.venues or None)
@@ -222,7 +277,7 @@ async def route_transit(req: TransitRequest):
 
 
 @router.post("/tasks")
-async def tasks(req: TaskRequest):
+async def tasks(req: TaskRequest, user: dict = Depends(require_user)):
     _validate_grade(req.grade)
     if not venue_service.get_venue(req.venue):
         raise HTTPException(404, f"未找到场馆：{req.venue}")
@@ -231,9 +286,10 @@ async def tasks(req: TaskRequest):
 
 
 @router.post("/explanation")
-async def explanation(req: ExplainRequest):
+async def explanation(req: ExplainRequest, user: dict = Depends(require_user)):
     _validate_grade(req.grade)
     if not venue_service.get_venue(req.venue):
         raise HTTPException(404, f"未找到场馆：{req.venue}")
-    result = await _llm_call(study_service.generate_explanation, req.grade, req.venue, req.topic)
+    topic = sanitize_question(req.topic)
+    result = await _llm_call(study_service.generate_explanation, req.grade, req.venue, topic)
     return {"grade_label": grade_label(req.grade), **result}

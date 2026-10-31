@@ -50,14 +50,29 @@ RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "12"))  # 参与重排的
 # ---------- 应用 ----------
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
+# 生产默认收紧同源白名单；跨域部署时通过 .env 覆盖
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS", "http://localhost:5173,http://localhost:8080",
+).split(",")
 MAX_HISTORY_ROUNDS = int(os.getenv("MAX_HISTORY_ROUNDS", "6"))  # 对话历史轮数
+
+# ---------- 账户体系 ----------
+USERS_DB = Path(os.getenv("USERS_DB", DATA_DIR / "users.db"))  # 用户库（SQLite）
+# HMAC 令牌签名密钥：必须显式配置；未配置时使用进程级随机密钥（重启后令牌全部失效）
+AUTH_SECRET = os.getenv("AUTH_SECRET", "")
+AUTH_SECRET_EPHEMERAL = not AUTH_SECRET
+if AUTH_SECRET_EPHEMERAL:
+    import secrets as _secrets
+
+    AUTH_SECRET = _secrets.token_hex(32)
+TOKEN_TTL_HOURS = int(os.getenv("TOKEN_TTL_HOURS", "168"))  # 登录令牌有效期（小时），默认 7 天
 
 # ---------- 工程底座：会话持久化 / 语义缓存 / 限流 ----------
 SESSION_DB = Path(os.getenv("SESSION_DB", DATA_DIR / "sessions.db"))   # 会话库（SQLite）
 CACHE_DB = Path(os.getenv("CACHE_DB", DATA_DIR / "answer_cache.db"))   # 语义缓存库（SQLite）
 CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() in ("1", "true", "yes")
 CACHE_TTL_HOURS = int(os.getenv("CACHE_TTL_HOURS", "24"))              # 缓存有效期（小时）
+RATELIMIT_DB = Path(os.getenv("RATELIMIT_DB", DATA_DIR / "ratelimit.db"))  # 限流计数库（多 worker 共享）
 CACHE_SIM_THRESHOLD = float(os.getenv("CACHE_SIM_THRESHOLD", "0.92"))  # 命中所需余弦相似度
 RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "20"))        # 每 IP 每分钟请求上限
 

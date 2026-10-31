@@ -37,7 +37,7 @@ red_culture/
 │   │   │   ├── cache.py         # 语义缓存（SQLite）
 │   │   │   └── ratelimit.py     # 按 IP 滑动窗口限流中间件
 │   │   └── services/            # 会话/场馆/研学服务
-│   ├── data/venues/             # 武汉红色场馆史料（15 篇，带元数据）
+│   ├── data/venues/             # 武汉红色场馆史料（20 篇：19 个场馆 + 综述）
 │   ├── data/eval_dataset.json   # 分学段评测集（48 题，四学段 × 知识库内外）
 │   ├── evaluate.py              # 评测脚本（检索命中率/关键词覆盖/拒答正确率）
 │   ├── ingest.py                # 知识库入库脚本
@@ -60,6 +60,7 @@ red_culture/
 cd backend
 copy .env.example .env            # Linux: cp .env.example .env
 # 编辑 .env，填入 ZHIPU_API_KEY=...
+# 同时设置 AUTH_SECRET=<随机长字符串>（登录令牌签名密钥，生产必设，否则重启后用户掉线）
 
 # 2. 构建并启动两个服务
 cd ..
@@ -67,6 +68,7 @@ docker compose up -d --build
 ```
 
 - 首次启动时 entrypoint 检测到知识库为空会自动执行 `ingest.py` 入库，无需手动操作
+- 会话/缓存/用户/限流数据存放在 `backend_data` 数据卷，容器重建不丢失
 - 前端：http://localhost:8080
 - 后端接口文档：http://localhost:8000/docs
 
@@ -102,13 +104,22 @@ npm run dev     # http://localhost:5173（已代理 /api -> :8000）
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | `/api/health` | 健康检查（智谱 GLM 配置 / 知识库状态） |
+| POST | `/api/auth/register` | 注册学生账户（返回签名令牌，有效期 7 天） |
+| POST | `/api/auth/login` | 登录（用户名 + 密码） |
+| GET | `/api/auth/me` | 当前登录用户信息（需 Bearer 令牌） |
 | GET | `/api/venues` | 场馆目录（支持 `?theme=` 过滤） |
+| GET | `/api/venues/{name}/detail` | 场馆史料详情（预置讲解词，不调 LLM） |
 | GET | `/api/grades` | 学段定义 |
-| POST | `/api/chat/stream` | 分级 RAG 问答（SSE 流式） |
-| POST | `/api/chat` | 分级 RAG 问答（一次性） |
-| POST | `/api/route` | 研学路线生成 |
-| POST | `/api/tasks` | 场馆研学任务单生成 |
-| POST | `/api/explanation` | 场馆讲解词生成 |
+| GET | `/api/tour/{venue}/route` | 场馆导览点位时序线（不调 LLM） |
+| POST | `/api/tour/explain` | 点位导览讲解词（SSE 流式，需登录） |
+| POST | `/api/chat/stream` | 分级 RAG 问答（SSE 流式，支持导览随行场景，需登录） |
+| POST | `/api/chat` | 分级 RAG 问答（一次性，需登录） |
+| POST | `/api/route` | 研学路线生成（需登录） |
+| POST | `/api/route/transit` | 跨场馆公交/地铁换乘规划（高德，可选 Key，未配置时降级） |
+| POST | `/api/tasks` | 场馆研学任务单生成（需登录） |
+| POST | `/api/explanation` | 场馆讲解词生成（需登录） |
+
+> 需登录的接口携带 `Authorization: Bearer <token>`；未登录返回 401。所有消耗 LLM 配额的接口受滑动窗口限流（登录用户按账户维度、未登录按 IP，每分钟 20 次），超限返回 429 + `Retry-After`。SSE 流在长时间无事件时会发送 `: ping` 心跳注释行，防止代理断连。
 
 请求体示例：
 
@@ -152,7 +163,7 @@ POST /api/chat/stream
 
 ## 知识库数据
 
-`backend/data/venues/` 收录 19 篇武汉红色场馆史料（Markdown + front matter 元数据），覆盖四大主题：
+`backend/data/venues/` 收录 20 篇武汉红色场馆史料（19 个场馆 + 1 篇综述，Markdown + front matter 元数据），覆盖四大主题：
 
 - **辛亥首义**：辛亥革命武昌起义纪念馆（红楼）、辛亥革命博物馆、武昌起义门
 - **党史转折**：八七会议会址、中共五大会址、农讲所、武昌毛泽东同志旧居、中国共产党纪律建设历史陈列馆、武汉中共中央机关旧址、武汉国民政府旧址（南洋大楼）、宋庆龄汉口旧居、向警予烈士陵园
@@ -186,6 +197,18 @@ POST /api/chat/stream
 - **安全约束**：工具白名单注册、参数 Pydantic 校验、每轮最多 2 个工具 + 总轮数硬上限，不做无限制自主规划
 - **流式事件**：工具执行时 SSE 先推送 `tool` 事件（前端显示"正在查询…"，旧版前端自动忽略，向后兼容）
 - **开关**：`backend/.env` 中 `TOOL_CALLING_ENABLED=false` 回退纯 RAG；`AGENT_MAX_STEPS=1` 可退回单轮工具模式
+
+## 测试与 CI
+
+后端测试套件覆盖账户体系、输入安全边界、限流（内存/SQLite 共享窗口）、语义缓存（含串台防护回归）与会话存储，不消耗 LLM 配额：
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest tests -q
+```
+
+GitHub Actions（`.github/workflows/ci.yml`）在 push/PR 时自动运行：后端 `pytest` + `pip check` 依赖一致性检查、前端 `npm run build`。
 
 ## 常见问题
 

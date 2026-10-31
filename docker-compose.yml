@@ -15,11 +15,21 @@ services:
       EMBEDDING_MODEL: BAAI/bge-small-zh-v1.5
       AMAP_KEY: ${AMAP_KEY:-}
       APP_PORT: 8000
+      # 令牌签名密钥：必须显式设置，否则重启后用户全部掉线（启动日志会警告）
+      AUTH_SECRET: ${AUTH_SECRET:-}
     volumes:
       - chroma_data:/app/chroma_db
+      # 会话/缓存/用户/限流 SQLite 持久化（容器重建不丢数据）
+      - backend_data:/app/data
     # 只在 Docker 内网暴露（前端 Nginx 经 backend:8000 访问），不对公网开放，防止 API Key 被刷
     expose:
       - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # 首次启动可能执行知识库入库，放宽启动宽限
 
   # ---------- Vue 前端（Nginx） ----------
   frontend:
@@ -29,7 +39,14 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   chroma_data:
+  backend_data:

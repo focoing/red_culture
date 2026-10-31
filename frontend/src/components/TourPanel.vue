@@ -1,7 +1,7 @@
 <script setup>
 // 场馆导览面板（产品主打）：选场馆 -> 点位时序线 -> AI 随行讲解 + 打卡 + 研学小任务 + 随行问答
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { chatStream, getTourRoute, getVenues, tourExplainStream } from '../api'
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { chatStream, getTourRoute, getVenues, streamErrMsg, tourExplainStream } from '../api'
 import MarkdownView from './MarkdownView.vue'
 
 const grade = inject('grade')
@@ -15,6 +15,10 @@ const themes = ref([])
 const activeTheme = ref('')
 const loadError = ref('')
 const opening = ref(false)
+const streamAborts = new Set() // 进行中的流式请求（讲解/问答），组件卸载时统一中断
+
+// 组件卸载时中断所有进行中的 SSE 流
+onUnmounted(() => { streamAborts.forEach((ac) => ac.abort()) })
 
 onMounted(async () => {
   try {
@@ -110,6 +114,8 @@ async function loadExplain(force = false) {
   if (!force && existed && (existed.done || existed.loading)) return
   const rec = reactive({ content: '', sources: [], loading: true, error: '', done: false })
   explains[key] = rec
+  const ac = new AbortController()
+  streamAborts.add(ac)
   try {
     await tourExplainStream(
       { venue: venue.value.name, section: p.section, grade: grade.value },
@@ -119,9 +125,14 @@ async function loadExplain(force = false) {
         else if (type === 'done') { rec.content = data; rec.loading = false; rec.done = true }
         else if (type === 'error') { rec.error = data.message || '服务异常'; rec.loading = false }
       },
+      ac.signal,
     )
   } catch (e) {
-    rec.error = `无法连接服务：${e.message}`
+    // 429/401 直接展示后端 detail 文案；主动中断（卸载）不提示
+    const msg = streamErrMsg(e, '无法连接服务')
+    if (msg) rec.error = msg
+  } finally {
+    streamAborts.delete(ac)
     rec.loading = false
   }
 }
@@ -160,14 +171,17 @@ function restartTour() {
 
 // ---- 随行问答（依附当前点位场景，复用流式问答管线） ----
 async function sendQuestion() {
-  if (!qa.value) return
-  const q = qa.value.input.trim()
-  if (!q || qa.value.sending) return
-  qa.value.input = ''
-  qa.value.messages.push({ role: 'user', content: q })
+  const box = qa.value
+  if (!box) return
+  const q = box.input.trim()
+  if (!q || box.sending) return
+  box.input = ''
+  box.messages.push({ role: 'user', content: q })
   const reply = reactive({ role: 'assistant', content: '', sources: [], streaming: true })
-  qa.value.messages.push(reply)
-  qa.value.sending = true
+  box.messages.push(reply)
+  box.sending = true
+  const ac = new AbortController()
+  streamAborts.add(ac)
   try {
     await chatStream(
       {
@@ -184,12 +198,16 @@ async function sendQuestion() {
           reply.streaming = false
         }
       },
+      ac.signal,
     )
   } catch (e) {
-    reply.content += `\n\n> ⚠️ 无法连接服务：${e.message}`
+    // 429/401 直接展示后端 detail 文案；主动中断（卸载）不提示
+    const msg = streamErrMsg(e, '无法连接服务')
+    if (msg) reply.content += `\n\n> ⚠️ ${msg}`
   } finally {
+    streamAborts.delete(ac)
     reply.streaming = false
-    qa.value.sending = false
+    box.sending = false
   }
 }
 
