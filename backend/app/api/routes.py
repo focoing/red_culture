@@ -222,6 +222,12 @@ async def chat(req: ChatRequest, user: dict = Depends(require_user)):
         extra_task=extra_task,
     )
     chat_service.append_history(sid, question, result["answer"])
+    # 落请求追踪：与流式路径（chat_service）同维度，按会话可回溯调用链
+    storage.append_trace(
+        sid, "chat", question, req.grade, req.venue, req.section,
+        result.get("doc_count"), result.get("tools_used") or [],
+        bool(result.get("cached")), result.get("elapsed_ms"),
+    )
     return {"session_id": sid, **result}
 
 

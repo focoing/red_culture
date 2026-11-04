@@ -49,24 +49,31 @@ html, body {
 .site-header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 3px; }
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
-/* ---------- 学段选择 ---------- */
+/* ---------- 学段选择（位于页签行，浅色背景） ---------- */
 .grade-selector { display: flex; gap: 6px; flex-wrap: wrap; }
 .grade-chip {
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: transparent;
-  color: #fff;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-light);
   border-radius: 999px;
   padding: 5px 14px;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.18s;
 }
-.grade-chip:hover { background: rgba(255, 255, 255, 0.15); }
+.grade-chip:hover { border-color: var(--red-600); color: var(--red-700); }
 .grade-chip.active { background: var(--gold); color: var(--red-900); border-color: var(--gold); font-weight: 700; }
 
 /* ---------- 主体布局 ---------- */
 .main-wrap { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; }
-.tab-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.tab-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.tab-grade {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.grade-label { font-size: 13px; color: var(--ink-light); }
 .tab-btn {
   border: 1px solid var(--line);
   background: #fff;

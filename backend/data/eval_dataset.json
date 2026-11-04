@@ -1,53 +1,1026 @@
 [
-  {"id": "pl-01", "grade": "primary_low", "question": "中共五大会址纪念馆在哪里呀？", "expected_venue": "中共五大会址纪念馆", "expected_keywords": ["武昌", "都府堤"], "out_of_kb": false},
-  {"id": "pl-02", "grade": "primary_low", "question": "八七会议是在哪里开的呀？", "expected_venue": "八七会议会址纪念馆", "expected_keywords": ["汉口", "鄱阳街"], "out_of_kb": false},
-  {"id": "pl-03", "grade": "primary_low", "question": "中山舰是什么呀？它为什么会沉到江里？", "expected_venue": "中山舰博物馆", "expected_keywords": ["1938", "金口"], "out_of_kb": false},
-  {"id": "pl-04", "grade": "primary_low", "question": "林祥谦是谁呀？", "expected_venue": "武汉二七纪念馆", "expected_keywords": ["京汉铁路", "1923"], "out_of_kb": false},
-  {"id": "pl-05", "grade": "primary_low", "question": "毛主席在武昌办的学校叫什么呀？", "expected_venue": "武昌农民运动讲习所旧址纪念馆", "expected_keywords": ["农民运动讲习所", "武昌"], "out_of_kb": false},
-  {"id": "pl-06", "grade": "primary_low", "question": "红楼是干嘛的地方呀？", "expected_venue": "辛亥革命武昌起义纪念馆（红楼）", "expected_keywords": ["1911", "武昌起义"], "out_of_kb": false},
-  {"id": "pl-07", "grade": "primary_low", "question": "施洋是做什么工作的呀？", "expected_venue": "施洋烈士陵园", "expected_keywords": ["律师"], "out_of_kb": false},
-  {"id": "pl-08", "grade": "primary_low", "question": "新四军的军部以前在武汉哪里呀？", "expected_venue": "汉口新四军军部旧址纪念馆", "expected_keywords": ["汉口", "叶挺"], "out_of_kb": false},
-  {"id": "pl-09", "grade": "primary_low", "question": "向警予是谁呀？", "expected_venue": "向警予烈士陵园", "expected_keywords": ["妇女"], "out_of_kb": false},
-  {"id": "pl-10", "grade": "primary_low", "question": "武汉有哪些红色景点可以去看呀？", "expected_venue": "武汉红色文化总览（研学背景资料）", "expected_keywords": ["场馆"], "out_of_kb": false},
-  {"id": "pl-11", "grade": "primary_low", "question": "武汉热干面哪家最好吃呀？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-  {"id": "pl-12", "grade": "primary_low", "question": "黄鹤楼的门票多少钱呀？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-
-  {"id": "ph-01", "grade": "primary_high", "question": "中共五大是哪一年召开的？会上有什么重要决定？", "expected_venue": "中共五大会址纪念馆", "expected_keywords": ["1927", "监察"], "out_of_kb": false},
-  {"id": "ph-02", "grade": "primary_high", "question": "八七会议上提出了什么有名的说法？", "expected_venue": "八七会议会址纪念馆", "expected_keywords": ["枪杆子"], "out_of_kb": false},
-  {"id": "ph-03", "grade": "primary_high", "question": "武昌起义是在哪一天爆发的？", "expected_venue": "辛亥革命博物馆", "expected_keywords": ["1911", "10月10日"], "out_of_kb": false},
-  {"id": "ph-04", "grade": "primary_high", "question": "京汉铁路工人大罢工是怎么回事？", "expected_venue": "武汉二七纪念馆", "expected_keywords": ["1923", "罢工"], "out_of_kb": false},
-  {"id": "ph-05", "grade": "primary_high", "question": "中山舰后来是怎么被打捞上来的？", "expected_venue": "中山舰博物馆", "expected_keywords": ["1997", "打捞"], "out_of_kb": false},
-  {"id": "ph-06", "grade": "primary_high", "question": "八路军武汉办事处是做什么的？", "expected_venue": "八路军武汉办事处旧址纪念馆", "expected_keywords": ["1937", "周恩来"], "out_of_kb": false},
-  {"id": "ph-07", "grade": "primary_high", "question": "宋庆龄在武汉的时候住在哪里？", "expected_venue": "宋庆龄汉口旧居纪念馆", "expected_keywords": ["沿江大道", "汉口"], "out_of_kb": false},
-  {"id": "ph-08", "grade": "primary_high", "question": "农讲所的学员都要学些什么课程？", "expected_venue": "武昌农民运动讲习所旧址纪念馆", "expected_keywords": ["学员", "毛泽东"], "out_of_kb": false},
-  {"id": "ph-09", "grade": "primary_high", "question": "起义门原来的名字叫什么？", "expected_venue": "武昌起义门遗址", "expected_keywords": ["中和门"], "out_of_kb": false},
-  {"id": "ph-10", "grade": "primary_high", "question": "中共中央机关以前在武汉办公的地方在哪里？", "expected_venue": "武汉中共中央机关旧址纪念馆", "expected_keywords": ["胜利街", "汉口"], "out_of_kb": false},
-  {"id": "ph-11", "grade": "primary_high", "question": "武汉长江大桥是哪一年建成的？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-  {"id": "ph-12", "grade": "primary_high", "question": "湖北省博物馆的越王勾践剑是真的吗？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-
-  {"id": "jn-01", "grade": "junior", "question": "中共五大是在什么样的历史背景下召开的？", "expected_venue": "中共五大会址纪念馆", "expected_keywords": ["四一二", "1927"], "out_of_kb": false},
-  {"id": "jn-02", "grade": "junior", "question": "八七会议为什么被称为中国革命的转折点？", "expected_venue": "八七会议会址纪念馆", "expected_keywords": ["土地革命", "武装"], "out_of_kb": false},
-  {"id": "jn-03", "grade": "junior", "question": "二七大罢工为什么会遭到镇压？", "expected_venue": "武汉二七纪念馆", "expected_keywords": ["吴佩孚", "1923"], "out_of_kb": false},
-  {"id": "jn-04", "grade": "junior", "question": "毛泽东在主办农讲所期间写出了哪篇重要文章？", "expected_venue": "武昌农民运动讲习所旧址纪念馆", "expected_keywords": ["湖南农民运动考察报告"], "out_of_kb": false},
-  {"id": "jn-05", "grade": "junior", "question": "中山舰在武汉保卫战中经历了什么？", "expected_venue": "中山舰博物馆", "expected_keywords": ["1938", "萨师俊"], "out_of_kb": false},
-  {"id": "jn-06", "grade": "junior", "question": "抗战初期为什么说武汉是全国抗战的中心？", "expected_venue": "八路军武汉办事处旧址纪念馆", "expected_keywords": ["抗战", "中心"], "out_of_kb": false},
-  {"id": "jn-07", "grade": "junior", "question": "收回汉口英租界是怎么回事？", "expected_venue": "武汉中共中央机关旧址纪念馆", "expected_keywords": ["英租界", "1927"], "out_of_kb": false},
-  {"id": "jn-08", "grade": "junior", "question": "向警予为什么被称为妇女运动的领袖？", "expected_venue": "向警予烈士陵园", "expected_keywords": ["妇女"], "out_of_kb": false},
-  {"id": "jn-09", "grade": "junior", "question": "新四军军部为什么最初设在汉口？", "expected_venue": "汉口新四军军部旧址纪念馆", "expected_keywords": ["1937", "叶挺"], "out_of_kb": false},
-  {"id": "jn-10", "grade": "junior", "question": "辛亥革命博物馆和红楼是什么关系？", "expected_venue": "辛亥革命博物馆", "expected_keywords": ["红楼", "都督府"], "out_of_kb": false},
-  {"id": "jn-11", "grade": "junior", "question": "武昌鱼怎么做才好吃？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-  {"id": "jn-12", "grade": "junior", "question": "武大樱花的最佳观赏时间是什么时候？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-
-  {"id": "sr-01", "grade": "senior", "question": "如何评价中共五大在党的制度建设史上的地位？", "expected_venue": "中共五大会址纪念馆", "expected_keywords": ["监察"], "out_of_kb": false},
-  {"id": "sr-02", "grade": "senior", "question": "八七会议确定的土地革命和武装反抗方针有何历史必然性？", "expected_venue": "八七会议会址纪念馆", "expected_keywords": ["土地革命", "武装"], "out_of_kb": false},
-  {"id": "sr-03", "grade": "senior", "question": "从二七大罢工看，早期中国工人运动有哪些历史局限？", "expected_venue": "武汉二七纪念馆", "expected_keywords": ["统一战线", "工人"], "out_of_kb": false},
-  {"id": "sr-04", "grade": "senior", "question": "《湖南农民运动考察报告》与农讲所的办学实践有何内在联系？", "expected_venue": "武昌农民运动讲习所旧址纪念馆", "expected_keywords": ["农民问题", "考察报告"], "out_of_kb": false},
-  {"id": "sr-05", "grade": "senior", "question": "中山舰的命运折射出中国近代海军怎样的历史处境？", "expected_venue": "中山舰博物馆", "expected_keywords": ["1938", "萨师俊"], "out_of_kb": false},
-  {"id": "sr-06", "grade": "senior", "question": "武汉抗战时期《新华日报》发挥了怎样的历史作用？", "expected_venue": "八路军武汉办事处旧址纪念馆", "expected_keywords": ["新华日报"], "out_of_kb": false},
-  {"id": "sr-07", "grade": "senior", "question": "1927年中共中央机关驻汉对中国革命有何意义？", "expected_venue": "武汉中共中央机关旧址纪念馆", "expected_keywords": ["1927", "中共中央"], "out_of_kb": false},
-  {"id": "sr-08", "grade": "senior", "question": "如何理解宋庆龄在1927年武汉时期的历史选择？", "expected_venue": "宋庆龄汉口旧居纪念馆", "expected_keywords": ["宋庆龄", "三大政策"], "out_of_kb": false},
-  {"id": "sr-09", "grade": "senior", "question": "鄂军都督府的成立为什么具有划时代意义？", "expected_venue": "辛亥革命武昌起义纪念馆（红楼）", "expected_keywords": ["中华民国", "1911"], "out_of_kb": false},
-  {"id": "sr-10", "grade": "senior", "question": "施洋的牺牲体现了近代知识分子怎样的担当？", "expected_venue": "施洋烈士陵园", "expected_keywords": ["律师", "劳工"], "out_of_kb": false},
-  {"id": "sr-11", "grade": "senior", "question": "武汉的高校排名情况怎么样？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true},
-  {"id": "sr-12", "grade": "senior", "question": "孙中山为什么把临时大总统职位让给袁世凯？", "expected_venue": null, "expected_keywords": [], "out_of_kb": true}
+  {
+    "id": "pl-01",
+    "grade": "primary_low",
+    "question": "中共五大会址纪念馆在哪里呀？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "武昌",
+      "都府堤"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-02",
+    "grade": "primary_low",
+    "question": "八七会议是在哪里开的呀？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "汉口",
+      "鄱阳街"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-03",
+    "grade": "primary_low",
+    "question": "中山舰是什么呀？它为什么会沉到江里？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "1938",
+      "金口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-04",
+    "grade": "primary_low",
+    "question": "林祥谦是谁呀？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "京汉铁路",
+      "1923"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-05",
+    "grade": "primary_low",
+    "question": "毛主席在武昌办的学校叫什么呀？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "农民运动讲习所",
+      "武昌"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-06",
+    "grade": "primary_low",
+    "question": "红楼是干嘛的地方呀？",
+    "expected_venue": "辛亥革命武昌起义纪念馆（红楼）",
+    "expected_keywords": [
+      "1911",
+      "武昌起义"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-07",
+    "grade": "primary_low",
+    "question": "施洋是做什么工作的呀？",
+    "expected_venue": "施洋烈士陵园",
+    "expected_keywords": [
+      "律师"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-08",
+    "grade": "primary_low",
+    "question": "新四军的军部以前在武汉哪里呀？",
+    "expected_venue": "汉口新四军军部旧址纪念馆",
+    "expected_keywords": [
+      "汉口",
+      "叶挺"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-09",
+    "grade": "primary_low",
+    "question": "向警予是谁呀？",
+    "expected_venue": "向警予烈士陵园",
+    "expected_keywords": [
+      "妇女"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-10",
+    "grade": "primary_low",
+    "question": "武汉有哪些红色景点可以去看呀？",
+    "expected_venue": "武汉红色文化总览（研学背景资料）",
+    "expected_keywords": [
+      "场馆"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-11",
+    "grade": "primary_low",
+    "question": "武汉热干面哪家最好吃呀？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "pl-12",
+    "grade": "primary_low",
+    "question": "黄鹤楼的门票多少钱呀？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "ph-01",
+    "grade": "primary_high",
+    "question": "中共五大是哪一年召开的？会上有什么重要决定？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "1927",
+      "监察"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-02",
+    "grade": "primary_high",
+    "question": "八七会议上提出了什么有名的说法？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "枪杆子"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-03",
+    "grade": "primary_high",
+    "question": "武昌起义是在哪一天爆发的？",
+    "expected_venue": "辛亥革命博物馆",
+    "expected_keywords": [
+      "1911",
+      "10月10日"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-04",
+    "grade": "primary_high",
+    "question": "京汉铁路工人大罢工是怎么回事？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "1923",
+      "罢工"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-05",
+    "grade": "primary_high",
+    "question": "中山舰后来是怎么被打捞上来的？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "1997",
+      "打捞"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-06",
+    "grade": "primary_high",
+    "question": "八路军武汉办事处是做什么的？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "1937",
+      "周恩来"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-07",
+    "grade": "primary_high",
+    "question": "宋庆龄在武汉的时候住在哪里？",
+    "expected_venue": "宋庆龄汉口旧居纪念馆",
+    "expected_keywords": [
+      "沿江大道",
+      "汉口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-08",
+    "grade": "primary_high",
+    "question": "农讲所的学员都要学些什么课程？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "学员",
+      "毛泽东"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-09",
+    "grade": "primary_high",
+    "question": "起义门原来的名字叫什么？",
+    "expected_venue": "武昌起义门遗址",
+    "expected_keywords": [
+      "中和门"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-10",
+    "grade": "primary_high",
+    "question": "中共中央机关以前在武汉办公的地方在哪里？",
+    "expected_venue": "武汉中共中央机关旧址纪念馆",
+    "expected_keywords": [
+      "胜利街",
+      "汉口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-11",
+    "grade": "primary_high",
+    "question": "武汉长江大桥是哪一年建成的？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "ph-12",
+    "grade": "primary_high",
+    "question": "湖北省博物馆的越王勾践剑是真的吗？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "jn-01",
+    "grade": "junior",
+    "question": "中共五大是在什么样的历史背景下召开的？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "四一二",
+      "1927"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-02",
+    "grade": "junior",
+    "question": "八七会议为什么被称为中国革命的转折点？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "土地革命",
+      "武装"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-03",
+    "grade": "junior",
+    "question": "二七大罢工为什么会遭到镇压？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "吴佩孚",
+      "1923"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-04",
+    "grade": "junior",
+    "question": "毛泽东在主办农讲所期间写出了哪篇重要文章？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "湖南农民运动考察报告"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-05",
+    "grade": "junior",
+    "question": "中山舰在武汉保卫战中经历了什么？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "1938",
+      "萨师俊"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-06",
+    "grade": "junior",
+    "question": "抗战初期为什么说武汉是全国抗战的中心？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "抗战",
+      "中心"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-07",
+    "grade": "junior",
+    "question": "收回汉口英租界是怎么回事？",
+    "expected_venue": "武汉中共中央机关旧址纪念馆",
+    "expected_keywords": [
+      "英租界",
+      "1927"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-08",
+    "grade": "junior",
+    "question": "向警予为什么被称为妇女运动的领袖？",
+    "expected_venue": "向警予烈士陵园",
+    "expected_keywords": [
+      "妇女"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-09",
+    "grade": "junior",
+    "question": "新四军军部为什么最初设在汉口？",
+    "expected_venue": "汉口新四军军部旧址纪念馆",
+    "expected_keywords": [
+      "1937",
+      "叶挺"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-10",
+    "grade": "junior",
+    "question": "辛亥革命博物馆和红楼是什么关系？",
+    "expected_venue": "辛亥革命博物馆",
+    "expected_keywords": [
+      "红楼",
+      "都督府"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-11",
+    "grade": "junior",
+    "question": "武昌鱼怎么做才好吃？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "jn-12",
+    "grade": "junior",
+    "question": "武大樱花的最佳观赏时间是什么时候？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "sr-01",
+    "grade": "senior",
+    "question": "如何评价中共五大在党的制度建设史上的地位？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "监察"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-02",
+    "grade": "senior",
+    "question": "八七会议确定的土地革命和武装反抗方针有何历史必然性？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "土地革命",
+      "武装"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-03",
+    "grade": "senior",
+    "question": "从二七大罢工看，早期中国工人运动有哪些历史局限？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "统一战线",
+      "工人"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-04",
+    "grade": "senior",
+    "question": "《湖南农民运动考察报告》与农讲所的办学实践有何内在联系？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "农民问题",
+      "考察报告"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-05",
+    "grade": "senior",
+    "question": "中山舰的命运折射出中国近代海军怎样的历史处境？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "1938",
+      "萨师俊"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-06",
+    "grade": "senior",
+    "question": "武汉抗战时期《新华日报》发挥了怎样的历史作用？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "新华日报"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-07",
+    "grade": "senior",
+    "question": "1927年中共中央机关驻汉对中国革命有何意义？",
+    "expected_venue": "武汉中共中央机关旧址纪念馆",
+    "expected_keywords": [
+      "1927",
+      "中共中央"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-08",
+    "grade": "senior",
+    "question": "如何理解宋庆龄在1927年武汉时期的历史选择？",
+    "expected_venue": "宋庆龄汉口旧居纪念馆",
+    "expected_keywords": [
+      "宋庆龄",
+      "三大政策"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-09",
+    "grade": "senior",
+    "question": "鄂军都督府的成立为什么具有划时代意义？",
+    "expected_venue": "辛亥革命武昌起义纪念馆（红楼）",
+    "expected_keywords": [
+      "中华民国",
+      "1911"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-10",
+    "grade": "senior",
+    "question": "施洋的牺牲体现了近代知识分子怎样的担当？",
+    "expected_venue": "施洋烈士陵园",
+    "expected_keywords": [
+      "律师",
+      "劳工"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-11",
+    "grade": "senior",
+    "question": "武汉的高校排名情况怎么样？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "sr-12",
+    "grade": "senior",
+    "question": "孙中山为什么把临时大总统职位让给袁世凯？",
+    "expected_venue": null,
+    "expected_keywords": [],
+    "out_of_kb": true
+  },
+  {
+    "id": "pl-13",
+    "grade": "primary_low",
+    "question": "红楼是什么地方呀？武昌起义之后是谁在这里办公的？",
+    "expected_venue": "辛亥革命武昌起义纪念馆（红楼）",
+    "expected_keywords": [
+      "鄂军都督府"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-14",
+    "grade": "primary_low",
+    "question": "辛亥革命博物馆里能看到阳夏保卫战的哪些展览呀？",
+    "expected_venue": "辛亥革命博物馆",
+    "expected_keywords": [
+      "阳夏保卫战"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-15",
+    "grade": "primary_low",
+    "question": "八七会议是在武汉的哪个地方召开的呀？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "八七会议",
+      "汉口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-16",
+    "grade": "primary_low",
+    "question": "中共五大会址纪念馆在武昌哪条小街上呀？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "都府堤"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-17",
+    "grade": "primary_low",
+    "question": "武昌农民运动讲习所旧址纪念馆是谁讲过课的地方呀？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "毛泽东"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-18",
+    "grade": "primary_low",
+    "question": "中山舰博物馆里的中山舰是在哪里被打捞上来的呀？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "金口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-19",
+    "grade": "primary_low",
+    "question": "京汉铁路的工人们为什么要大罢工呀？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "京汉铁路",
+      "大罢工"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-20",
+    "grade": "primary_low",
+    "question": "《新华日报》最早是在哪个城市创刊的呀？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "新华日报",
+      "武汉"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-21",
+    "grade": "primary_low",
+    "question": "汉口新四军军部旧址纪念馆里，新四军的第一任军长是谁呀？",
+    "expected_venue": "汉口新四军军部旧址纪念馆",
+    "expected_keywords": [
+      "叶挺"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-22",
+    "grade": "primary_low",
+    "question": "施洋烈士是为了哪次工人斗争牺牲的呀？",
+    "expected_venue": "施洋烈士陵园",
+    "expected_keywords": [
+      "二七大罢工"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-23",
+    "grade": "primary_low",
+    "question": "向警予烈士奶奶为中国的妇女解放做了哪些事情呀？",
+    "expected_venue": "向警予烈士陵园",
+    "expected_keywords": [
+      "妇女解放",
+      "向警予"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-24",
+    "grade": "primary_low",
+    "question": "武昌起义门遗址和武昌起义有什么关系呀？",
+    "expected_venue": "武昌起义门遗址",
+    "expected_keywords": [
+      "武昌起义"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "pl-25",
+    "grade": "primary_low",
+    "question": "毛泽东在武昌都府堤的旧居里写过一篇很有名的文章，是什么呀？",
+    "expected_venue": "武昌毛泽东同志旧居",
+    "expected_keywords": [
+      "湖南农民运动考察报告"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-13",
+    "grade": "primary_high",
+    "question": "参观辛亥革命武昌起义纪念馆（红楼）时，能了解到鄂军都督府成立后做了哪些事？",
+    "expected_venue": "辛亥革命武昌起义纪念馆（红楼）",
+    "expected_keywords": [
+      "鄂军都督府"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-14",
+    "grade": "primary_high",
+    "question": "辛亥革命博物馆的基本陈列里，阳夏保卫战部分讲述了哪些内容？",
+    "expected_venue": "辛亥革命博物馆",
+    "expected_keywords": [
+      "阳夏保卫战"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-15",
+    "grade": "primary_high",
+    "question": "在八七会议会址纪念馆，能了解到八七会议召开时的哪些经过与内容？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "八七会议"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-16",
+    "grade": "primary_high",
+    "question": "中共五大会址纪念馆里，首届中央监察委员会的成员有哪些故事？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "中央监察委员会"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-17",
+    "grade": "primary_high",
+    "question": "武昌农民运动讲习所旧址纪念馆的旧址陈列里，学员的教学与训练是怎样的？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "讲习所"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-18",
+    "grade": "primary_high",
+    "question": "中山舰博物馆里的中山舰是在哪次战役中沉没的？打捞修复的过程是怎样的？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "金口",
+      "打捞"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-19",
+    "grade": "primary_high",
+    "question": "武汉二七纪念馆的陈列里，京汉铁路工人大罢工的经过是怎样的？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "京汉铁路"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-20",
+    "grade": "primary_high",
+    "question": "八路军武汉办事处旧址纪念馆中，《新华日报》在武汉创刊时的情况是怎样的？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "新华日报"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-21",
+    "grade": "primary_high",
+    "question": "宋庆龄汉口旧居纪念馆里，宋庆龄在武汉做了哪些保卫革命成果的斗争？",
+    "expected_venue": "宋庆龄汉口旧居纪念馆",
+    "expected_keywords": [
+      "宋庆龄"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-22",
+    "grade": "primary_high",
+    "question": "中国共产党纪律建设历史陈列馆的基本陈列「纪律建设永远在路上」展示了哪些内容？",
+    "expected_venue": "中国共产党纪律建设历史陈列馆",
+    "expected_keywords": [
+      "纪律建设"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-23",
+    "grade": "primary_high",
+    "question": "武汉国民政府旧址纪念馆里召开的二届三中全会是怎么回事？",
+    "expected_venue": "武汉国民政府旧址纪念馆",
+    "expected_keywords": [
+      "二届三中全会"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-24",
+    "grade": "primary_high",
+    "question": "武汉受降堂记录的受降仪式是在什么时间举行的？当时是什么情景？",
+    "expected_venue": "武汉受降堂",
+    "expected_keywords": [
+      "受降"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "ph-25",
+    "grade": "primary_high",
+    "question": "苏联空军志愿队烈士墓纪念的是哪些在武汉大空战中牺牲的英雄？",
+    "expected_venue": "苏联空军志愿队烈士墓",
+    "expected_keywords": [
+      "武汉大空战",
+      "苏联"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-13",
+    "grade": "junior",
+    "question": "八七会议为什么被称为中国共产党历史上的重要转折？",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "八七会议"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-14",
+    "grade": "junior",
+    "question": "中共五大为什么会首次选举产生中央监察委员会？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "中央监察委员会"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-15",
+    "grade": "junior",
+    "question": "毛泽东在武昌农讲所期间写作《湖南农民运动考察报告》有什么意义？",
+    "expected_venue": "武昌农民运动讲习所旧址纪念馆",
+    "expected_keywords": [
+      "湖南农民运动考察报告"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-16",
+    "grade": "junior",
+    "question": "中山舰在金口之战中沉没的经过是怎样的？它见证了什么历史？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "金口"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-17",
+    "grade": "junior",
+    "question": "京汉铁路工人大罢工显示了怎样的力量？二七惨案带来了什么影响？",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "京汉铁路",
+      "大罢工"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-18",
+    "grade": "junior",
+    "question": "八路军武汉办事处在武汉抗战时期发挥了哪些重要作用？",
+    "expected_venue": "八路军武汉办事处旧址纪念馆",
+    "expected_keywords": [
+      "八路军"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-19",
+    "grade": "junior",
+    "question": "新四军在汉口组建时，叶挺军长在武汉开展了哪些工作？",
+    "expected_venue": "汉口新四军军部旧址纪念馆",
+    "expected_keywords": [
+      "叶挺"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-20",
+    "grade": "junior",
+    "question": "大革命时期武汉中共中央机关旧址见证了收回汉口英租界等事件，具体经过是怎样的？",
+    "expected_venue": "武汉中共中央机关旧址纪念馆",
+    "expected_keywords": [
+      "汉口英租界"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-21",
+    "grade": "junior",
+    "question": "施洋律师在二七大罢工中是如何抗争的？他的牺牲有什么意义？",
+    "expected_venue": "施洋烈士陵园",
+    "expected_keywords": [
+      "施洋"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-22",
+    "grade": "junior",
+    "question": "向警予在武汉的斗争经历体现了怎样的革命精神？",
+    "expected_venue": "向警予烈士陵园",
+    "expected_keywords": [
+      "向警予"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-23",
+    "grade": "junior",
+    "question": "宋庆龄汉口旧居见证了宋庆龄与中国共产党的怎样的合作？",
+    "expected_venue": "宋庆龄汉口旧居纪念馆",
+    "expected_keywords": [
+      "宋庆龄"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-24",
+    "grade": "junior",
+    "question": "武昌起义门在起义当夜发挥了怎样的关键作用？",
+    "expected_venue": "武昌起义门遗址",
+    "expected_keywords": [
+      "武昌起义"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "jn-25",
+    "grade": "junior",
+    "question": "为什么说武昌都府堤的毛泽东旧居是毛泽东一家人最后的团聚之地？",
+    "expected_venue": "武昌毛泽东同志旧居",
+    "expected_keywords": [
+      "团聚",
+      "毛泽东"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-13",
+    "grade": "senior",
+    "question": "从鄂军都督府的施政举措，分析辛亥革命的进步性与历史局限。",
+    "expected_venue": "辛亥革命武昌起义纪念馆（红楼）",
+    "expected_keywords": [
+      "鄂军都督府"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-14",
+    "grade": "senior",
+    "question": "阳夏保卫战的进程与失败对辛亥革命的走向产生了怎样的影响？",
+    "expected_venue": "辛亥革命博物馆",
+    "expected_keywords": [
+      "阳夏保卫战"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-15",
+    "grade": "senior",
+    "question": "结合八七会议会址纪念馆的史料，分析八七会议前后中国共产党革命策略的转变。",
+    "expected_venue": "八七会议会址纪念馆",
+    "expected_keywords": [
+      "八七会议"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-16",
+    "grade": "senior",
+    "question": "中共五大设立首届中央监察委员会对党的纪律建设有什么深远意义？",
+    "expected_venue": "中共五大会址纪念馆",
+    "expected_keywords": [
+      "中央监察委员会"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-17",
+    "grade": "senior",
+    "question": "中山舰的打捞与修复过程体现了怎样的文物保护与爱国主义教育理念？",
+    "expected_venue": "中山舰博物馆",
+    "expected_keywords": [
+      "打捞",
+      "修复"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-18",
+    "grade": "senior",
+    "question": "从京汉铁路工人大罢工看中国工人阶级登上政治舞台的历史意义。",
+    "expected_venue": "武汉二七纪念馆",
+    "expected_keywords": [
+      "京汉铁路"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-19",
+    "grade": "senior",
+    "question": "新四军军部设在汉口对华中抗战布局有什么战略意义？",
+    "expected_venue": "汉口新四军军部旧址纪念馆",
+    "expected_keywords": [
+      "新四军"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-20",
+    "grade": "senior",
+    "question": "收回汉口英租界在大革命时期的外交斗争中处于怎样的地位？",
+    "expected_venue": "武汉中共中央机关旧址纪念馆",
+    "expected_keywords": [
+      "汉口英租界"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-21",
+    "grade": "senior",
+    "question": "从《武汉1927》沉浸式思政课看红色场馆思政教育方式的创新。",
+    "expected_venue": "中国共产党纪律建设历史陈列馆",
+    "expected_keywords": [
+      "武汉1927"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-22",
+    "grade": "senior",
+    "question": "如何评价国民政府迁都武汉与「七·一五」事件对大革命的影响？",
+    "expected_venue": "武汉国民政府旧址纪念馆",
+    "expected_keywords": [
+      "国民政府"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-23",
+    "grade": "senior",
+    "question": "武汉受降堂的受降纪念碑为什么被称为「失而复得的胜利见证」？",
+    "expected_venue": "武汉受降堂",
+    "expected_keywords": [
+      "受降纪念碑"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-24",
+    "grade": "senior",
+    "question": "1938年武汉大空战中苏联空军志愿队的牺牲如何体现国际主义精神？",
+    "expected_venue": "苏联空军志愿队烈士墓",
+    "expected_keywords": [
+      "武汉大空战"
+    ],
+    "out_of_kb": false
+  },
+  {
+    "id": "sr-25",
+    "grade": "senior",
+    "question": "《湖南农民运动考察报告》在都府堤诞生，对党的农村革命路线的形成有何意义？",
+    "expected_venue": "武昌毛泽东同志旧居",
+    "expected_keywords": [
+      "湖南农民运动考察报告"
+    ],
+    "out_of_kb": false
+  }
 ]

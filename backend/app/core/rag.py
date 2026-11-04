@@ -5,6 +5,8 @@
 回答保留 [n] 引用角标（与参考资料编号对应），来源原文随 sources 下发，
 前端渲染为可点击角标 + 史料原文展开，实现逐句溯源。
 """
+import logging
+import time
 from typing import AsyncGenerator, List
 
 from langchain_core.documents import Document
@@ -16,6 +18,8 @@ from app.core.llm import get_llm
 from app.core.prompts import CHAT_TEMPLATE, build_system_prompt
 from app.core.tools import MAX_TOOLS_PER_CALL, get_tools, run_tool_calls
 from app.core.vectorstore import search
+
+logger = logging.getLogger("red-culture.rag")
 
 # 开启工具调用时追加到 System Prompt 的意图路由提示：
 # 参观信息走结构化工具，史料不足走补充检索，充足则直接依据参考资料作答
@@ -147,15 +151,21 @@ async def agenerate(
             点位讲解等检索已由管线完成的场景传 False，单轮直出更快。
 
     Returns:
-        {"answer": str, "sources": [{venue, section, snippet}]}
+        {"answer": str, "sources": [{venue, section, snippet}],
+         "doc_count": int, "cached": bool, "tools_used": [str], "elapsed_ms": int}
     """
+    t0 = time.monotonic()
     tools_on = TOOL_CALLING_ENABLED if use_tools is None else use_tools
     if CACHE_ENABLED and not history:
         hit = answer_cache.lookup(
             question, grade, _cache_dim(venue_filter, section_filter, cache_section),
         )
         if hit is not None:
-            return {"answer": hit["answer"], "sources": hit["sources"], "cached": True}
+            logger.info("RAG缓存命中 grade=%s venue=%s elapsed=%dms",
+                        grade, venue_filter, int((time.monotonic() - t0) * 1000))
+            return {"answer": hit["answer"], "sources": hit["sources"], "cached": True,
+                    "doc_count": 0, "tools_used": [],
+                    "elapsed_ms": int((time.monotonic() - t0) * 1000)}
 
     docs = _retrieve(question, venue_filter, section_filter)
     messages = build_messages(question, grade, docs, history, extra_task, use_tools=tools_on)
@@ -185,9 +195,12 @@ async def agenerate(
     else:
         resp = await llm.ainvoke(messages)
     sources = _sources_of(docs)
-    result = {"answer": resp.content, "sources": sources}
+    result = {"answer": resp.content, "sources": sources, "doc_count": len(docs),
+              "cached": False, "elapsed_ms": int((time.monotonic() - t0) * 1000)}
     if tools_used:
         result["tools_used"] = tools_used
+    logger.info("RAG完成 grade=%s venue=%s docs=%d tools=%s elapsed=%dms",
+                grade, venue_filter, len(docs), ",".join(tools_used) or "-", result["elapsed_ms"])
     if CACHE_ENABLED and not history:
         answer_cache.store(
             question, grade, _cache_dim(venue_filter, section_filter, cache_section),
@@ -213,24 +226,31 @@ async def agenerate_stream(
     点位讲解传 False（检索已由三级放宽管线完成），单轮流式直出更快。
     """
     tools_on = TOOL_CALLING_ENABLED if use_tools is None else use_tools
+    t0 = time.monotonic()
     # 语义缓存命中：以事件流形式一次性回放，免调 LLM
     if CACHE_ENABLED and not history:
         hit = answer_cache.lookup(
             question, grade, _cache_dim(venue_filter, section_filter, cache_section),
         )
         if hit is not None:
+            logger.info("RAG缓存命中(流式) grade=%s venue=%s elapsed=%dms",
+                        grade, venue_filter, int((time.monotonic() - t0) * 1000))
             yield {"type": "sources", "data": hit["sources"]}
             yield {"type": "delta", "data": hit["answer"]}
-            yield {"type": "done", "data": hit["answer"], "cached": True}
+            yield {"type": "done", "data": hit["answer"], "cached": True,
+                   "doc_count": 0, "tools_used": [],
+                   "elapsed_ms": int((time.monotonic() - t0) * 1000)}
             return
 
     docs = _retrieve(question, venue_filter, section_filter)
+    doc_count = len(docs)
     sources = _sources_of(docs)
     yield {"type": "sources", "data": sources}
 
     messages = build_messages(question, grade, docs, history, extra_task, use_tools=tools_on)
     llm = get_llm(streaming=True)
     final_chunks: list[str] = []  # 仅最终回答轮的文本（中间工具轮文本不计入完整答案）
+    tools_used: list[str] = []
 
     async def _stream(runnable, msgs):
         """流式产出文本增量并累积到 final_chunks。"""
@@ -258,6 +278,7 @@ async def agenerate_stream(
                 final_chunks = step_chunks  # 本轮即最终回答
                 break
             # 通知前端正在查询（前端不识别该事件时自动忽略，向后兼容）
+            tools_used.extend(c.get("name", "") for c in calls)
             yield {"type": "tool", "data": [
                 {"name": c.get("name", ""), "args": c.get("args", {})} for c in calls
             ]}
@@ -276,9 +297,13 @@ async def agenerate_stream(
             yield ev
 
     full = "".join(final_chunks)
+    elapsed_ms = int((time.monotonic() - t0) * 1000)
+    logger.info("RAG完成(流式) grade=%s venue=%s docs=%d tools=%s elapsed=%dms",
+                grade, venue_filter, doc_count, ",".join(tools_used) or "-", elapsed_ms)
     if CACHE_ENABLED and not history:
         answer_cache.store(
             question, grade, _cache_dim(venue_filter, section_filter, cache_section),
             full, sources,
         )
-    yield {"type": "done", "data": full}
+    yield {"type": "done", "data": full, "cached": False, "doc_count": doc_count,
+           "tools_used": tools_used, "elapsed_ms": elapsed_ms}

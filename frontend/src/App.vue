@@ -78,7 +78,6 @@ onUnmounted(() => window.removeEventListener('rc:unauthorized', onUnauthorized))
       <div class="subtitle">场馆随行导览｜红色故事讲解｜研学任务生成｜史料查询</div>
     </div>
     <div class="header-right">
-      <GradeSelector v-model="grade" />
       <template v-if="user">
         <span class="user-chip" :title="user.username">{{ user.username }}</span>
         <button class="auth-btn" @click="doLogout">退出</button>
@@ -96,6 +95,11 @@ onUnmounted(() => window.removeEventListener('rc:unauthorized', onUnauthorized))
         :class="{ active: tab === t.key }"
         @click="tab = t.key"
       >{{ t.label }}</button>
+      <!-- 学段选择：跟随页签行展示，三个页面均可直接切换 -->
+      <div class="tab-grade">
+        <span class="grade-label">学段</span>
+        <GradeSelector v-model="grade" />
+      </div>
     </nav>
 
     <TourPanel v-show="tab === 'tour'" />

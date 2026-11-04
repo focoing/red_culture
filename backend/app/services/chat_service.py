@@ -37,6 +37,7 @@ async def chat_stream(
     history = get_history(session_id)
     full_answer_parts = []
     started = time.time()
+    done_info: dict = {}
 
     async for event in agenerate_stream(
         question, grade=grade, history=history,
@@ -45,8 +46,15 @@ async def chat_stream(
         if event["type"] == "delta":
             full_answer_parts.append(event["data"])
         elif event["type"] == "done":
+            done_info = event
             event = {**event, "elapsed": round(time.time() - started, 2)}
         yield event
 
     if full_answer_parts:
         append_history(session_id, question, "".join(full_answer_parts))
+        # 落请求追踪：检索文档数 / 工具链 / 耗时 / 缓存命中，按会话可回溯调用链
+        storage.append_trace(
+            session_id, "chat", question, grade, venue, section,
+            done_info.get("doc_count"), done_info.get("tools_used") or [],
+            bool(done_info.get("cached")), done_info.get("elapsed_ms"),
+        )

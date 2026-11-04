@@ -7,6 +7,7 @@
 """
 from typing import AsyncGenerator
 
+from app.core import storage
 from app.core.prompts import TOUR_EXPLAIN_TASK
 from app.core.rag import agenerate_stream
 
@@ -18,9 +19,18 @@ async def explain_stream(venue: str, section: str, grade: str) -> AsyncGenerator
     无需工具循环，单轮流式直出，首字延迟更低。
     """
     question = f"请为「{venue}」的「{section}」展区撰写本点位的导览讲解词。"
+    done_info: dict = {}
     async for event in agenerate_stream(
         question, grade=grade,
         venue_filter=venue, section_filter=section,
         extra_task=TOUR_EXPLAIN_TASK, use_tools=False,
     ):
+        if event["type"] == "done":
+            done_info = event
         yield event
+    # 落请求追踪（scene=tour，无会话维度故 session_id 为空）
+    storage.append_trace(
+        None, "tour", question, grade, venue, section,
+        done_info.get("doc_count"), done_info.get("tools_used") or [],
+        bool(done_info.get("cached")), done_info.get("elapsed_ms"),
+    )

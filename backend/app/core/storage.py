@@ -4,6 +4,7 @@
 接口与原内存版保持一致：new_session / get_history / append_history。
 异常回退：SQLite 不可用时自动降级为内存会话，不阻断主流程。
 """
+import json
 import sqlite3
 import threading
 import time
@@ -46,10 +47,30 @@ def _get_conn() -> sqlite3.Connection | None:
                 created_at REAL NOT NULL
             )"""
         )
+        # 请求追踪表：记录每次 LLM 问答的检索文档数 / 工具链 / 耗时 / 缓存命中，
+        # 与 messages 按 session_id 关联，形成可回溯的调用链（排查"答非所问"用）
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS request_traces (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id   TEXT,
+                scene        TEXT NOT NULL,
+                question     TEXT NOT NULL,
+                grade        TEXT,
+                venue        TEXT,
+                section      TEXT,
+                doc_count    INTEGER,
+                tools_used   TEXT,
+                cached       INTEGER NOT NULL DEFAULT 0,
+                elapsed_ms   INTEGER,
+                created_at   REAL NOT NULL
+            )"""
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_traces_session ON request_traces(session_id, id)")
         deadline = time.time() - _SESSION_TTL_DAYS * 86400
         # 顺带清理过期数据，避免库文件无限增长
         conn.execute("DELETE FROM messages WHERE created_at < ?", (deadline,))
         conn.execute("DELETE FROM sessions WHERE created_at < ?", (deadline,))
+        conn.execute("DELETE FROM request_traces WHERE created_at < ?", (deadline,))
         conn.commit()
         _conn = conn
     except Exception:
@@ -121,6 +142,32 @@ def append_history(session_id: str, question: str, answer: str) -> None:
                 "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
                 [(session_id, "user", question, now),
                  (session_id, "assistant", answer, now)],
+            )
+            conn.commit()
+    except Exception:
+        pass
+
+
+def append_trace(session_id: str | None, scene: str, question: str, grade: str | None,
+                 venue: str | None, section: str | None, doc_count: int | None,
+                 tools_used: list | None, cached: bool, elapsed_ms: int | None) -> None:
+    """落一条请求追踪（scene: chat/tour/study）。失败静默降级，不影响问答主流程。
+
+    tools_used 存 JSON 数组文本，如 ["search_history"]；与 append_history 同一
+    session_id 维度，按会话即可回放"提问 -> 检索 -> 工具 -> 回答"完整链路。
+    """
+    conn = _get_conn()
+    if conn is None:
+        return
+    try:
+        with _lock:
+            conn.execute(
+                "INSERT INTO request_traces (session_id, scene, question, grade, venue, "
+                "section, doc_count, tools_used, cached, elapsed_ms, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (session_id, scene, question, grade, venue, section, doc_count,
+                 json.dumps(tools_used or [], ensure_ascii=False),
+                 1 if cached else 0, elapsed_ms, time.time()),
             )
             conn.commit()
     except Exception:
