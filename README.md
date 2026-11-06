@@ -2,7 +2,7 @@
 
 面向**中小学生红色研学场景**的垂直 RAG 智能导览系统。
 
-基于 **Python + LangChain** 搭建检索增强生成（RAG）架构：**BAAI-BGE** 作为本地 Embedding 模型，**Chroma** 向量数据库存储武汉红色场馆史料，**智谱 GLM（glm-4.7-flash）** 云端大模型负责生成；**FastAPI** 提供后端接口，**Vue 3** 实现前端交互，**Docker** 完成容器化部署。
+基于 **Python + LangChain** 搭建检索增强生成（RAG）架构：**BAAI-BGE** 作为本地 Embedding 模型，**Chroma** 向量数据库存储武汉红色场馆史料，**Deepseek v4.1-flash** 云端大模型负责生成；**FastAPI** 提供后端接口，**Vue 3** 实现前端交互，**Docker** 完成容器化部署。
 
 ## 核心特性
 
