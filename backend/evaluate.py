@@ -4,7 +4,7 @@
 用法（在 backend/ 目录下执行）：
     python evaluate.py                          # 等价 --mode retrieval（免费，不调 LLM）
     python evaluate.py --mode retrieval --grade junior
-    python evaluate.py --mode full --limit 8    # 抽样全链路评测（消耗 GLM 配额，较慢）
+    python evaluate.py --mode full --limit 8    # 抽样全链路评测（消耗 LLM 配额，较慢）
     python evaluate.py --mode full --no-cache   # 绕过语义缓存强制重新生成
 
 指标说明：
@@ -149,7 +149,7 @@ async def run_full(items: list[dict]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="武汉红色文化导览系统分学段评测")
     parser.add_argument("--mode", choices=["retrieval", "full"], default="retrieval",
-                        help="retrieval=仅检索（免费）；full=完整生成（消耗 GLM 配额）")
+                        help="retrieval=仅检索（免费）；full=完整生成（消耗 LLM 配额）")
     parser.add_argument("--grade", choices=GRADE_ORDER, default=None, help="只评测指定学段")
     parser.add_argument("--limit", type=int, default=None, help="限制评测题数（截断数据集）")
     parser.add_argument("--no-cache", action="store_true", help="full 模式下绕过语义缓存")

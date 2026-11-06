@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="武汉红色文化导览小助手",
-    description="面向中小学生红色研学的垂直 RAG 智能导览系统：BGE 检索 + Chroma + 智谱 GLM",
+    description="面向中小学生红色研学的垂直 RAG 智能导览系统：BGE 检索 + Chroma + DeepSeek（硅基流动）",
     version="1.1.0",
     lifespan=lifespan,
 )

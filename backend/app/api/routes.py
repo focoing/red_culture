@@ -44,15 +44,15 @@ _SSE_HEADERS = {
     "Connection": "keep-alive",
 }
 
-_LLM_BUSY_MSG = "智谱大模型当前访问量过大（免费模型高峰期限流），请稍等片刻再重试"
+_LLM_BUSY_MSG = "大模型当前访问量过大（高峰期限流），请稍等片刻再重试"
 
 
 async def _llm_call(fn, *args, **kwargs):
-    """执行 LLM 生成调用；智谱限流（429）时转为友好的 503 提示。"""
+    """执行 LLM 生成调用；LLM 限流（429）时转为友好的 503 提示。"""
     try:
         return await fn(*args, **kwargs)
     except RateLimitError:
-        raise HTTPException(status_code=503, detail="智谱大模型当前繁忙（429 限流），请稍后重试")
+        raise HTTPException(status_code=503, detail="大模型当前繁忙（429 限流），请稍后重试")
 
 
 async def _sse_with_heartbeat(source, interval: float = 15.0):

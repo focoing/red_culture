@@ -21,14 +21,14 @@ os.environ.setdefault("HF_ENDPOINT", os.getenv("HF_ENDPOINT", "https://hf-mirror
 EMBEDDING_DEVICE = os.getenv("EMBEDDING_DEVICE", "cpu")  # cpu / cuda
 EMBED_QUERY_INSTRUCTION = "为这个句子生成表示以用于检索相关文章："
 
-# ---------- LLM（智谱 GLM，OpenAI 兼容接口） ----------
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")  # 在 https://open.bigmodel.cn 申请
-ZHIPU_BASE_URL = os.getenv("ZHIPU_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/")
-LLM_MODEL = os.getenv("LLM_MODEL", "glm-4.7-flash")
+# ---------- LLM（硅基流动 SiliconFlow，OpenAI 兼容接口） ----------
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")  # 在 https://cloud.siliconflow.cn 申请
+ZHIPU_BASE_URL = os.getenv("ZHIPU_BASE_URL", "https://api.siliconflow.cn/v1")
+LLM_MODEL = os.getenv("LLM_MODEL", "deepseek-ai/DeepSeek-V4.1-Flash")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "180"))        # 单次请求超时（秒），推理模型耗时较长
 LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "5"))  # 429 限流时的指数退避重试次数
-LLM_THINKING = os.getenv("LLM_THINKING", "").lower()      # ""=模型默认 / true / false（GLM 深度思考开关）
+LLM_THINKING = os.getenv("LLM_THINKING", "").lower()      # ""=模型默认 / true / false（GLM 系列深度思考开关，DeepSeek 等模型无效）
 
 # ---------- RAG 检索 ----------
 TOP_K = int(os.getenv("TOP_K", "5"))              # 召回文档数
@@ -76,7 +76,7 @@ RATELIMIT_DB = Path(os.getenv("RATELIMIT_DB", DATA_DIR / "ratelimit.db"))  # 限
 CACHE_SIM_THRESHOLD = float(os.getenv("CACHE_SIM_THRESHOLD", "0.92"))  # 命中所需余弦相似度
 RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "20"))        # 每 IP 每分钟请求上限
 
-# ---------- 智能工具调用（P4：GLM Function Calling） ----------
+# ---------- 智能工具调用（P4：LLM Function Calling） ----------
 TOOL_CALLING_ENABLED = os.getenv("TOOL_CALLING_ENABLED", "true").lower() in ("1", "true", "yes")
 AGENT_MAX_STEPS = int(os.getenv("AGENT_MAX_STEPS", "3"))  # Agentic 工具决策循环轮数上限（普通问题首轮直接作答，不消耗轮数）
 

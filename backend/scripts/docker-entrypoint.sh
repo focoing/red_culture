@@ -3,7 +3,7 @@
 set -e
 
 if [ -z "${ZHIPU_API_KEY:-}" ]; then
-  echo "[entrypoint] 警告：未配置 ZHIPU_API_KEY，继续启动但问答将不可用"
+  echo "[entrypoint] 警告：未配置 ZHIPU_API_KEY（硅基流动 API Key），继续启动但问答将不可用"
 fi
 
 if [ ! -d "/app/chroma_db" ] || [ -z "$(ls -A /app/chroma_db 2>/dev/null)" ]; then

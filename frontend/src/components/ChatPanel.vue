@@ -74,7 +74,7 @@ async function send(text) {
     )
   } catch (e) {
     // 429/401 直接展示后端 detail 文案；主动中断（卸载）不提示
-    const msg = streamErrMsg(e, '无法连接服务（请确认后端已启动且已配置智谱 API Key）')
+    const msg = streamErrMsg(e, '无法连接服务（请确认后端已启动且已配置硅基流动 API Key）')
     if (msg) reply.content += `\n\n> ⚠️ ${msg}`
   } finally {
     reply.streaming = false

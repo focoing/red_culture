@@ -1,6 +1,6 @@
 # 武汉红色文化导览小助手 - 一键容器化部署
 # 用法：
-#   1. 在宿主机环境变量或 backend/.env 中配置 ZHIPU_API_KEY（https://open.bigmodel.cn 申请）
+#   1. 在宿主机环境变量或项目根目录 .env 中配置 ZHIPU_API_KEY（硅基流动 https://cloud.siliconflow.cn 申请）
 #   2. docker compose up -d --build
 services:
   # ---------- FastAPI 后端 ----------
@@ -10,8 +10,8 @@ services:
     restart: unless-stopped
     environment:
       ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
-      ZHIPU_BASE_URL: ${ZHIPU_BASE_URL:-https://open.bigmodel.cn/api/paas/v4/}
-      LLM_MODEL: ${LLM_MODEL:-glm-4.7-flash}
+      ZHIPU_BASE_URL: ${ZHIPU_BASE_URL:-https://api.siliconflow.cn/v1}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-ai/DeepSeek-V4.1-Flash}
       EMBEDDING_MODEL: BAAI/bge-small-zh-v1.5
       AMAP_KEY: ${AMAP_KEY:-}
       APP_PORT: 8000
